@@ -18,7 +18,7 @@ function WatchInner() {
 
   const type = (params.get("type") as StreamKind | "freetv") || "movie";
   const id = params.get("id") || "";
-  const ext = params.get("ext") || (type === "live" ? "ts" : "mp4");
+  const ext = params.get("ext") || (type === "live" ? "ts" : "mkv");
   const title = params.get("title") || "Now Playing";
   const resume = Number(params.get("resume") || 0);
   const seriesId = params.get("series") || undefined;
@@ -119,7 +119,7 @@ function WatchInner() {
     if (!nextEp || !seriesId) return;
     const t = `${title.split(" · ")[0]} · ${nextEp.title || `Episode ${nextEp.episode_num}`}`;
     router.replace(
-      `/watch?type=series&id=${nextEp.id}&ext=${nextEp.container_extension || "mp4"}&title=${encodeURIComponent(t)}&series=${seriesId}`,
+      `/watch?type=series&id=${nextEp.id}&ext=${nextEp.container_extension || "mkv"}&title=${encodeURIComponent(t)}&series=${seriesId}`,
     );
   }, [nextEp, seriesId, title, router]);
 

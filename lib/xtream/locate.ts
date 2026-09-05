@@ -1,10 +1,7 @@
 import { buildStreamUrl } from "./urls";
-import { cached } from "./cache";
 import type { XtreamCredentials, StreamKind } from "./types";
 
 const UA = "VLC/3.0.20 LibVLC/3.0.20";
-// Providers often serve a title under a different container than the catalog claims.
-const EXTS = ["mkv", "mp4", "ts", "avi", "m4v"];
 
 export interface Located {
   url: string;
@@ -12,16 +9,11 @@ export interface Located {
   contentType: string;
 }
 
-function isMedia(ct: string): boolean {
-  if (!ct) return true; // some servers omit it on the data stream — assume ok
-  return !/text\/html|application\/json|text\/plain/i.test(ct);
-}
-
 /**
- * Finds the actually-playable provider URL for a VOD/series title by probing
- * common container extensions (the catalog's extension is often wrong, returning
- * an HTML error page). Result is cached so repeated range requests don't re-probe.
- * Returns null when nothing playable is found (title unavailable).
+ * VOD and series files on this IPTV provider are stored as MKV.
+ * Do not probe extensions with Range requests: a number of Xtream servers
+ * reject Range/partial GETs even though the actual media URL is valid.
+ * FFprobe/FFmpeg will perform the real validation when playback starts.
  */
 export async function locatePlayable(
   creds: XtreamCredentials,
@@ -29,27 +21,28 @@ export async function locatePlayable(
   id: string,
   preferred: string,
 ): Promise<Located | null> {
-  const key = `locate|${creds.username}|${type}|${id}`;
-  return cached(key, 30 * 60 * 1000, async () => {
-    const order = [preferred, ...EXTS.filter((e) => e !== preferred)];
-    for (const ext of order) {
-      const url = buildStreamUrl(creds, type, id, ext);
-      try {
-        const res = await fetch(url, {
-          method: "GET",
-          headers: { "User-Agent": UA, Range: "bytes=0-1", Accept: "*/*" },
-          redirect: "follow",
-          signal: AbortSignal.timeout(4500),
-        });
-        const ct = res.headers.get("content-type") || "";
-        res.body?.cancel().catch(() => {});
-        if ((res.ok || res.status === 206) && isMedia(ct)) {
-          return { url, ext, contentType: ct };
-        }
-      } catch {
-        // try next extension
-      }
+  if (type === "movie" || type === "series") {
+    const url = buildStreamUrl(creds, type, id, "mkv");
+    console.log(`[LOCATE] ${type}/${id} using fixed MKV URL`);
+    return { url, ext: "mkv", contentType: "video/x-matroska" };
+  }
+
+  // Live streams retain the old probing behavior as a safe fallback.
+  const url = buildStreamUrl(creds, type, id, preferred || "ts");
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "User-Agent": UA, Accept: "*/*" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(4500),
+    });
+    const ct = res.headers.get("content-type") || "";
+    res.body?.cancel().catch(() => {});
+    if (res.ok && !/text\/html|application\/json/i.test(ct)) {
+      return { url, ext: preferred || "ts", contentType: ct };
     }
-    return null;
-  });
+  } catch {
+    // handled by returning null
+  }
+  return null;
 }
