@@ -1,0 +1,54 @@
+{
+  "name": "lumen",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A cinematic, self-hosted Xtream Codes / IPTV web player — Live TV, Movies & Series — built with Next.js.",
+  "license": "MIT",
+  "author": "Talha Ashraf",
+  "homepage": "https://github.com/Talha-Ashraf420/lumen#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Talha-Ashraf420/lumen.git"
+  },
+  "keywords": [
+    "iptv",
+    "xtream-codes",
+    "m3u",
+    "video-player",
+    "nextjs",
+    "live-tv",
+    "self-hosted"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@tanstack/query-sync-storage-persister": "^5.101.0",
+    "@tanstack/react-query": "^5.101.0",
+    "@tanstack/react-query-persist-client": "^5.101.0",
+    "@tanstack/react-virtual": "^3.14.2",
+    "framer-motion": "^12.40.0",
+    "hls.js": "^1.6.16",
+    "lucide-react": "^1.18.0",
+    "mpegts.js": "^1.8.0",
+    "next": "16.2.9",
+    "nextjs-toploader": "^3.9.17",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-parallax-tilt": "^1.7.331",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

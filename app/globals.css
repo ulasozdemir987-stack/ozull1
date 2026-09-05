@@ -1,0 +1,185 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------------------
+   Lumen — Spatial Liquid Glass design system
+   warm graphite base · refractive frosted glass · periwinkle + mint accents
+---------------------------------------------------------------------------- */
+
+@theme {
+  /* warm graphite scale (not pure black) */
+  --color-ink-950: #0b0a10;
+  --color-ink-900: #131119;
+  --color-ink-850: #18161f;
+  --color-ink-800: #1f1c2a;
+  --color-ink-700: #2a2638;
+  --color-ink-600: #383348;
+  --color-ink-500: #4a4560;
+
+  --color-fog-300: #cbc9d6;
+  --color-fog-400: #9d9aae;
+  --color-fog-500: #6e6b80;
+  --color-fog-600: #4a4860;
+
+  /* periwinkle (primary) + mint (secondary) accents */
+  --color-iris-300: #c2c8ff;
+  --color-iris-400: #a6b0ff;
+  --color-iris-500: #7e89f0;
+  --color-mint-300: #bff2dc;
+  --color-mint-400: #8fe3c2;
+  --color-mint-500: #5fc9a6;
+
+  --color-background: var(--color-ink-900);
+  --color-foreground: #f3f1f9;
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
+  --radius-card: 16px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-ink-900);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+body {
+  background-image:
+    radial-gradient(1100px 600px at 12% -10%, rgba(166, 176, 255, 0.10), transparent 60%),
+    radial-gradient(900px 520px at 100% 0%, rgba(143, 227, 194, 0.07), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* ---------- scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-600) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--color-ink-600);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--color-ink-500); background-clip: content-box; }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---------- liquid glass ---------- */
+@utility glass {
+  background-color: color-mix(in srgb, var(--color-ink-800) 52%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, white 10%, transparent),
+    color-mix(in srgb, white 2%, transparent) 45%,
+    transparent
+  );
+  backdrop-filter: blur(22px) saturate(165%);
+  -webkit-backdrop-filter: blur(22px) saturate(165%);
+  border: 1px solid color-mix(in srgb, white 12%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, white 20%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, black 20%, transparent),
+    0 16px 48px -16px rgba(0, 0, 0, 0.7);
+}
+
+/* brighter glass for elevated/featured surfaces */
+@utility glass-bright {
+  background-color: color-mix(in srgb, var(--color-ink-700) 55%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, white 16%, transparent),
+    color-mix(in srgb, white 4%, transparent) 50%,
+    transparent
+  );
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid color-mix(in srgb, white 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, white 28%, transparent),
+    0 20px 60px -18px rgba(0, 0, 0, 0.75);
+}
+
+/* near-opaque surface for menus/popovers (legible over busy content) */
+@utility panel {
+  background-color: color-mix(in srgb, var(--color-ink-850) 97%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid color-mix(in srgb, white 11%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, white 14%, transparent),
+    0 24px 70px -20px rgba(0, 0, 0, 0.85);
+}
+
+@utility glow-iris {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-iris-400) 45%, transparent),
+    0 12px 50px -12px color-mix(in srgb, var(--color-iris-400) 55%, transparent);
+}
+
+@utility focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-ink-900), 0 0 0 4px var(--color-iris-400);
+}
+
+/* shimmer skeleton */
+.shimmer { position: relative; overflow: hidden; background: var(--color-ink-800); }
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, white 7%, transparent), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card-in { animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes kenburns {
+  0% { transform: scale(1.05) translate(0, 0); }
+  100% { transform: scale(1.18) translate(-2%, -2%); }
+}
+.kenburns { animation: kenburns 20s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .kenburns { animation: none; } }
+
+/* drifting aurora blobs */
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(8vw, 6vh) scale(1.15); }
+  66% { transform: translate(-6vw, 10vh) scale(0.92); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-10vw, -8vh) scale(1.2); }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(12vw, -6vh) scale(1.1); }
+}
+.aurora-blob { will-change: transform; }
+
+.tilt-scene { perspective: 1000px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after { animation: none; }
+  .aurora-blob { animation: none !important; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
