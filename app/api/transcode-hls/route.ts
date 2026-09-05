@@ -196,6 +196,7 @@ function mimeFor(file: string) {
 }
 
 export async function GET(req: Request) {
+  console.log(`[TRANSCODE-HLS] request ${new URL(req.url).pathname}${new URL(req.url).search}`);
   try { await requireSession(); } catch { return new Response("Not authenticated", { status: 401 }); }
   cleanupExpired();
   const url = new URL(req.url);

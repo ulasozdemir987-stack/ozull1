@@ -65,12 +65,11 @@ function WatchInner() {
 
   // VOD plays directly from the provider when that's viable (fast); otherwise
   // we go straight to the proxy. Live always uses the proxy (MSE/CORS).
-  const { data: resolved, isLoading: resolving } = useQuery({
-    queryKey: ["resolve", type, id, ext],
-    queryFn: () => resolveSrc(mediaKind, id, ext),
-    enabled: !isLive && !!id,
-    staleTime: 5 * 60 * 1000,
-  });
+  // VOD/series are intentionally sent through FFmpeg → HLS first.
+  // Do not probe/direct-play the provider URL here: that path bypasses the
+  // multi-audio/subtitle HLS pipeline and can make the browser play MPEG-TS
+  // directly without exposing alternate tracks.
+  const resolving = false;
 
   const sources = useMemo(() => {
     // Free TV: a public m3u8 played straight through the HLS proxy.
@@ -83,13 +82,8 @@ function WatchInner() {
     // used as a fallback if transcoding fails.
     const transcodeHls = transcodeHlsSrc(mediaKind, id, ext);
     const transcode = transcodeSrc(mediaKind, id, ext);
-    return [
-      transcodeHls,
-      ...(resolved?.directOk && resolved.url ? [resolved.url] : []),
-      proxy,
-      transcode,
-    ];
-  }, [isLive, type, mediaKind, id, ext, freeUrl, resolved]);
+    return [transcodeHls, proxy, transcode];
+  }, [isLive, type, mediaKind, id, ext, freeUrl]);
 
   // mark live channels recently-watched once
   const recentedRef = useRef(false);
