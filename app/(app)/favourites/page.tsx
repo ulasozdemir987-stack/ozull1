@@ -13,39 +13,39 @@ export default function FavouritesPage() {
 
   return (
     <>
-      <TopBar title="My List" />
+      <TopBar title="Listem" />
       {empty ? (
         <div className="flex flex-col items-center gap-3 px-8 py-32 text-center text-fog-500">
           <Heart className="h-10 w-10" />
-          <p className="text-sm">Nothing saved yet. Tap the heart on any movie, series or channel.</p>
+          <p className="text-sm">Henüz kaydedilmiş içerik yok. Bir film, dizi veya kanaldaki kalp simgesine dokunun.</p>
         </div>
       ) : (
         <div className="space-y-10 py-6">
-          <Section title="Movies" count={favourites.movie.length}>
+          <Section title="Filmler" count={favourites.movie.length}>
             {favourites.movie.map((m) => (
               <PosterCard key={m.id} href={`/movies/${m.id}`} item={{ id: m.id, name: m.name, poster: m.poster }} />
             ))}
           </Section>
-          <Section title="Series" count={favourites.series.length}>
+          <Section title="Diziler" count={favourites.series.length}>
             {favourites.series.map((s) => (
               <PosterCard key={s.id} href={`/series/${s.id}`} item={{ id: s.id, name: s.name, poster: s.poster }} />
             ))}
           </Section>
-          <Section title="Live Channels" count={favourites.live.length}>
+          <Section title="Canlı Kanallar" count={favourites.live.length}>
             {favourites.live.map((c) => (
               <PosterCard
                 key={c.id}
                 href={`/watch?type=live&id=${c.id}&ext=ts&title=${encodeURIComponent(cleanName(c.name))}`}
-                item={{ id: c.id, name: c.name, poster: c.poster, subtitle: "Live" }}
+                item={{ id: c.id, name: c.name, poster: c.poster, subtitle: "Canlı" }}
               />
             ))}
           </Section>
-          <Section title="Free Channels" count={freeFavourites.length}>
+          <Section title="Ücretsiz Kanallar" count={freeFavourites.length}>
             {freeFavourites.map((c) => (
               <PosterCard
                 key={c.url}
                 href={`/watch?type=freetv&url=${encodeURIComponent(c.url)}&title=${encodeURIComponent(c.name)}`}
-                item={{ id: c.url, name: c.name, poster: c.logo, subtitle: "Free TV" }}
+                item={{ id: c.url, name: c.name, poster: c.logo, subtitle: "Ücretsiz TV" }}
               />
             ))}
           </Section>

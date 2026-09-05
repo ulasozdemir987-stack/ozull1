@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronDown, Search, LayoutGrid } from "lucide-react";
+import { Check, ChevronDown, Ara, LayoutGrid } from "lucide-react";
 import type { Category } from "@/lib/xtream/types";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ export function CategoryPicker({
 
   const current =
     value === "all" || !value
-      ? "All categories"
+      ? "Tüm kategoriler"
       : categories.find((c) => c.category_id === value)?.category_name || "Category";
 
   const filtered = useMemo(() => {
@@ -74,12 +74,12 @@ export function CategoryPicker({
             className="absolute left-0 top-12 z-50 w-[300px] overflow-hidden rounded-2xl panel"
           >
             <div className="flex items-center gap-2 border-b border-white/10 px-3.5 py-2.5">
-              <Search className="h-4 w-4 shrink-0 text-fog-500" />
+              <Ara className="h-4 w-4 shrink-0 text-fog-500" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search categories…"
+                placeholder="Ara categories…"
                 className="w-full bg-transparent text-sm placeholder:text-fog-500 focus:outline-none"
               />
               {categories.length > 0 && (
@@ -88,7 +88,7 @@ export function CategoryPicker({
             </div>
 
             <div className="max-h-[min(60vh,360px)] overflow-y-auto p-1.5">
-              <Row label="All categories" active={value === "all" || !value} onClick={() => pick("all")} />
+              <Row label="Tüm kategoriler" active={value === "all" || !value} onClick={() => pick("all")} />
               {filtered.map((c) => (
                 <Row
                   key={c.category_id}
@@ -98,7 +98,7 @@ export function CategoryPicker({
                 />
               ))}
               {filtered.length === 0 && (
-                <p className="px-3 py-6 text-center text-sm text-fog-500">No matching categories.</p>
+                <p className="px-3 py-6 text-center text-sm text-fog-500">Eşleşen kategori bulunamadı.</p>
               )}
             </div>
           </motion.div>

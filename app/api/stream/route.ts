@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/session";
 import { buildStreamUrl } from "@/lib/xtream/urls";
-import { locatePlayable } from "@/lib/xtream/locate";
+import { locateOynatable } from "@/lib/xtream/locate";
 import type { StreamKind } from "@/lib/xtream/types";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   try {
     creds = await requireSession();
   } catch {
-    return new Response("Not authenticated", { status: 401 });
+    return new Response("Kimlik doğrulaması yapılmadı", { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
   // HTML error page). Find the real container; bail clearly if none is playable.
   let upstreamUrl = buildStreamUrl(creds, type, id, ext);
   if (type !== "live") {
-    const located = await locatePlayable(creds, type, id, ext);
+    const located = await locateOynatable(creds, type, id, ext);
     if (!located) {
       console.log(`[STREAM] ${type}/${id} UNAVAILABLE (no playable container)`);
       return new Response("Title unavailable from provider", {
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     console.log(`[STREAM] ${type}/${id} PROXY upstream FETCH FAILED after ${Date.now() - t0}ms: ${(err as Error).message}`);
-    return new Response(`Upstream fetch failed: ${(err as Error).message}`, { status: 502 });
+    return new Response(`Üst sunucudan veri alınamadı: ${(err as Error).message}`, { status: 502 });
   }
   console.log(
     `[STREAM] ${type}/${id} PROXY status=${upstream.status} ttfb=${Date.now() - t0}ms range=${range || "none"} ct=${upstream.headers.get("content-type") || "?"}`,

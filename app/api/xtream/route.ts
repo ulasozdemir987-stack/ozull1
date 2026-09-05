@@ -29,12 +29,12 @@ export async function GET(req: Request) {
   try {
     creds = await requireSession();
   } catch {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ error: "Kimlik doğrulaması yapılmadı" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
   const action = searchParams.get("action");
-  if (!action) return NextResponse.json({ error: "Missing action" }, { status: 400 });
+  if (!action) return NextResponse.json({ error: "İşlem eksik" }, { status: 400 });
 
   const params: Record<string, string | undefined> = {};
   for (const [k, v] of searchParams.entries()) {
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
   } catch (err) {
     const status = err instanceof XtreamError && err.status ? err.status : 502;
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Upstream error" },
+      { error: err instanceof Error ? err.message : "Üst sunucu hatası" },
       { status },
     );
   }

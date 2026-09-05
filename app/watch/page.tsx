@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
-import { streamSrc, resolveSrc, transcodeSrc, transcodeHlsSrc, freeTvSrc, api } from "@/lib/api";
-import { useSeriesInfo } from "@/lib/hooks";
+import { streamSrc, resolveSrc, transcodeSrc, freeTvSrc, api } from "@/lib/api";
+import { useDizilerInfo } from "@/lib/hooks";
 import { useLibrary } from "@/store/library";
 import { parseDurationToSeconds } from "@/lib/utils";
 import type { StreamKind, Episode } from "@/lib/xtream/types";
@@ -18,15 +18,15 @@ function WatchInner() {
 
   const type = (params.get("type") as StreamKind | "freetv") || "movie";
   const id = params.get("id") || "";
-  const ext = params.get("ext") || (type === "live" ? "ts" : "mkv");
-  const title = params.get("title") || "Now Playing";
+  const ext = params.get("ext") || (type === "live" ? "ts" : "mp4");
+  const title = params.get("title") || "Şimdi oynatılıyor";
   const resume = Number(params.get("resume") || 0);
   const seriesId = params.get("series") || undefined;
   const freeUrl = params.get("url") || ""; // free-TV public m3u8
-  const isLive = type === "live" || type === "freetv";
+  const isCanlı = type === "live" || type === "freetv";
 
   // ordered episode list for next-episode (series only)
-  const { data: seriesInfo } = useSeriesInfo(type === "series" ? seriesId : undefined);
+  const { data: seriesInfo } = useDizilerInfo(type === "series" ? seriesId : undefined);
   const flatEpisodes = useMemo<Episode[]>(() => {
     if (!seriesInfo?.episodes) return [];
     return Object.keys(seriesInfo.episodes)
@@ -60,30 +60,29 @@ function WatchInner() {
   }, [type, id, movieInfo, flatEpisodes]);
 
   // VOD plays directly from the provider when that's viable (fast); otherwise
-  // we go straight to the proxy. Live always uses the proxy (MSE/CORS).
+  // we go straight to the proxy. Canlı always uses the proxy (MSE/CORS).
   const mediaKind = (type === "freetv" ? "live" : type) as StreamKind;
 
   // VOD plays directly from the provider when that's viable (fast); otherwise
-  // we go straight to the proxy. Live always uses the proxy (MSE/CORS).
-  // VOD/series are intentionally sent through FFmpeg → HLS first.
-  // Do not probe/direct-play the provider URL here: that path bypasses the
-  // multi-audio/subtitle HLS pipeline and can make the browser play MPEG-TS
-  // directly without exposing alternate tracks.
-  const resolving = false;
+  // we go straight to the proxy. Canlı always uses the proxy (MSE/CORS).
+  const { data: resolved, isLoading: resolving } = useQuery({
+    queryKey: ["resolve", type, id, ext],
+    queryFn: () => resolveSrc(mediaKind, id, ext),
+    enabled: !isCanlı && !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const sources = useMemo(() => {
-    // Free TV: a public m3u8 played straight through the HLS proxy.
+    // Ücretsiz TV: a public m3u8 played straight through the HLS proxy.
     if (type === "freetv") return freeUrl ? [freeTvSrc(freeUrl)] : [];
     const proxy = streamSrc(mediaKind, id, ext);
-    // Live: HLS first (smooth, self-healing, adaptive) → raw MPEG-TS proxy fallback.
-    if (isLive) return [`/api/hls?id=${id}`, proxy];
-    // VOD/series: FFmpeg → HLS FIRST so embedded multi-audio and subtitle
-    // tracks from MPEG-TS are exposed to hls.js. A direct URL can still be
-    // used as a fallback if transcoding fails.
-    const transcodeHls = transcodeHlsSrc(mediaKind, id, ext);
+    // Canlı: HLS first (smooth, self-healing, adaptive) → raw MPEG-TS proxy fallback.
+    if (isCanlı) return [`/api/hls?id=${id}`, proxy];
+    // VOD chain: [direct (only if the probe says browsers are allowed)] → proxy →
+    // ffmpeg remux (handles MKV/AVI the browser can't decode natively).
     const transcode = transcodeSrc(mediaKind, id, ext);
-    return [transcodeHls, proxy, transcode];
-  }, [isLive, type, mediaKind, id, ext, freeUrl]);
+    return [...(resolved?.directOk && resolved.url ? [resolved.url] : []), proxy, transcode];
+  }, [isCanlı, type, mediaKind, id, ext, freeUrl, resolved]);
 
   // mark live channels recently-watched once
   const recentedRef = useRef(false);
@@ -95,7 +94,7 @@ function WatchInner() {
   const lastSave = useRef(0);
   const onProgress = useCallback(
     (position: number, duration: number) => {
-      if (isLive || !duration) return;
+      if (isCanlı || !duration) return;
       const now = Date.now();
       if (now - lastSave.current < 5000) return;
       lastSave.current = now;
@@ -112,26 +111,26 @@ function WatchInner() {
         updatedAt: now,
       });
     },
-    [isLive, mediaKind, id, seriesId, title, poster, ext, saveProgress],
+    [isCanlı, mediaKind, id, seriesId, title, poster, ext, saveProgress],
   );
 
   const goNext = useCallback(() => {
     if (!nextEp || !seriesId) return;
     const t = `${title.split(" · ")[0]} · ${nextEp.title || `Episode ${nextEp.episode_num}`}`;
     router.replace(
-      `/watch?type=series&id=${nextEp.id}&ext=${nextEp.container_extension || "mkv"}&title=${encodeURIComponent(t)}&series=${seriesId}`,
+      `/watch?type=series&id=${nextEp.id}&ext=${nextEp.container_extension || "mp4"}&title=${encodeURIComponent(t)}&series=${seriesId}`,
     );
   }, [nextEp, seriesId, title, router]);
 
   if (!id && !freeUrl) {
     return (
       <div className="grid h-dvh place-items-center text-fog-500">
-        Nothing to play. <button onClick={() => router.back()} className="ml-2 underline">Go back</button>
+        Oynatılacak içerik yok. <button onClick={() => router.back()} className="ml-2 underline">Geri dön</button>
       </div>
     );
   }
 
-  if (!isLive && resolving) {
+  if (!isCanlı && resolving) {
     return (
       <div className="grid h-dvh place-items-center bg-black">
         <Loader2 className="h-10 w-10 animate-spin text-iris-400" />
@@ -143,7 +142,7 @@ function WatchInner() {
     <VideoPlayer
       sources={sources}
       ext={ext}
-      isLive={isLive}
+      isCanlı={isCanlı}
       title={title}
       startTime={resume}
       hasNext={!!nextEp}

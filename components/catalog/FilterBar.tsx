@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Ara, SlidersHorizontal, X } from "lucide-react";
 import type { Category } from "@/lib/xtream/types";
 import { CategoryPicker } from "./CategoryPicker";
 import { SORT_LABELS, type SortKey } from "@/lib/utils";
@@ -33,11 +33,11 @@ export function FilterBar({
 
       {/* text filter */}
       <div className="flex min-w-[180px] flex-1 items-center gap-2 rounded-full border border-white/10 bg-ink-850/80 px-3.5 py-2">
-        <Search className="h-4 w-4 shrink-0 text-fog-500" />
+        <Ara className="h-4 w-4 shrink-0 text-fog-500" />
         <input
           value={query}
           onChange={(e) => onQuery(e.target.value)}
-          placeholder="Filter in this section…"
+          placeholder="Bu bölümde filtrele…"
           className="w-full bg-transparent text-sm placeholder:text-fog-500 focus:outline-none"
         />
         {query && (

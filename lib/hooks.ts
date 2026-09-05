@@ -3,18 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 
-export const useLiveCategories = () =>
-  useQuery({ queryKey: ["live", "cats"], queryFn: api.liveCategories });
+export const useCanlıKategoriler = () =>
+  useQuery({ queryKey: ["live", "cats"], queryFn: api.liveKategoriler });
 
-export const useLiveStreams = (categoryId?: string, enabled = true) =>
+export const useCanlıStreams = (categoryId?: string, enabled = true) =>
   useQuery({
     queryKey: ["live", "streams", categoryId ?? "all"],
     queryFn: () => api.liveStreams(categoryId),
     enabled,
   });
 
-export const useVodCategories = () =>
-  useQuery({ queryKey: ["vod", "cats"], queryFn: api.vodCategories });
+export const useVodKategoriler = () =>
+  useQuery({ queryKey: ["vod", "cats"], queryFn: api.vodKategoriler });
 
 export const useVodStreams = (categoryId?: string, enabled = true) =>
   useQuery({
@@ -26,17 +26,17 @@ export const useVodStreams = (categoryId?: string, enabled = true) =>
 export const useVodInfo = (id?: string) =>
   useQuery({ queryKey: ["vod", "info", id], queryFn: () => api.vodInfo(id!), enabled: !!id });
 
-export const useSeriesCategories = () =>
-  useQuery({ queryKey: ["series", "cats"], queryFn: api.seriesCategories });
+export const useDizilerKategoriler = () =>
+  useQuery({ queryKey: ["series", "cats"], queryFn: api.seriesKategoriler });
 
-export const useSeriesList = (categoryId?: string, enabled = true) =>
+export const useDizilerList = (categoryId?: string, enabled = true) =>
   useQuery({
     queryKey: ["series", "list", categoryId ?? "all"],
     queryFn: () => api.series(categoryId),
     enabled,
   });
 
-export const useSeriesInfo = (id?: string) =>
+export const useDizilerInfo = (id?: string) =>
   useQuery({ queryKey: ["series", "info", id], queryFn: () => api.seriesInfo(id!), enabled: !!id });
 
 export const useEpg = (streamId?: number, enabled = true) =>

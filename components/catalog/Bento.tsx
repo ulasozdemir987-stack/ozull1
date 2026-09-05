@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Info, Star, Tv, Heart, Film, ChevronRight } from "lucide-react";
+import { Oynat, Info, Star, Tv, Heart, Film, ChevronRight } from "lucide-react";
 import { SmartImage } from "@/components/ui/SmartImage";
 import type { HeroItem } from "./Hero";
 import type { WatchProgress } from "@/store/library";
@@ -66,7 +66,7 @@ export function FeaturedTile({ items, className }: { items: HeroItem[]; classNam
               href={item.playHref}
               className="flex items-center gap-2 rounded-xl bg-foreground px-6 py-2.5 font-semibold text-ink-950 transition-transform hover:scale-[1.04]"
             >
-              <Play className="h-5 w-5 fill-ink-950" /> Play
+              <Oynat className="h-5 w-5 fill-ink-950" /> Oynat
             </Link>
             <Link
               href={item.detailHref}
@@ -94,7 +94,7 @@ export function FeaturedTile({ items, className }: { items: HeroItem[]; classNam
   );
 }
 
-/** Generic glass nav tile (Live / Movies / Series / My List). */
+/** Generic glass nav tile (Canlı / Filmler / Diziler / Listem). */
 export function NavTile({
   href,
   title,

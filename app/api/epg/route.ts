@@ -22,12 +22,12 @@ export async function GET(req: Request) {
   try {
     creds = await requireSession();
   } catch {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ error: "Kimlik doğrulaması yapılmadı" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
   const streamId = searchParams.get("stream_id");
-  if (!streamId) return NextResponse.json({ error: "Missing stream_id" }, { status: 400 });
+  if (!streamId) return NextResponse.json({ error: "stream_id eksik" }, { status: 400 });
   const limit = Number(searchParams.get("limit") || 8);
 
   try {
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
   } catch (err) {
     const status = err instanceof XtreamError && err.status ? err.status : 502;
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "EPG error" },
+      { error: err instanceof Error ? err.message : "EPG hatası" },
       { status },
     );
   }

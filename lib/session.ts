@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import type { XtreamCredentials } from "./xtream/types";
 
 const COOKIE = "lumen_session";
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 /**
  * Credentials are kept in an httpOnly cookie so the provider username/password
@@ -43,7 +43,7 @@ export async function getSession(): Promise<XtreamCredentials | null> {
 export async function requireSession(): Promise<XtreamCredentials> {
   const creds = await getSession();
   if (!creds) {
-    const err = new Error("Not authenticated");
+    const err = new Error("Kimlik doğrulaması yapılmadı");
     (err as Error & { code: string }).code = "NO_SESSION";
     throw err;
   }

@@ -8,23 +8,23 @@ import { type HeroItem } from "@/components/catalog/Hero";
 import { Shelf } from "@/components/catalog/Shelf";
 import { PosterCard } from "@/components/catalog/PosterCard";
 import { PosterSkeletonRow, Skeleton } from "@/components/ui/Skeleton";
-import { useVodCategories, useSeriesCategories, useVodStreams, useSeriesList } from "@/lib/hooks";
+import { useVodKategoriler, useDizilerKategoriler, useVodStreams, useDizilerList } from "@/lib/hooks";
 import { useLibrary, continueWatching } from "@/store/library";
 import { sortItems, yearFrom, ratingNum } from "@/lib/utils";
 
 const CARD = "w-[140px] shrink-0 sm:w-[165px]";
 
-export default function HomePage() {
-  const vodCats = useVodCategories();
-  const seriesCats = useSeriesCategories();
+export default function AnaSayfaPage() {
+  const vodCats = useVodKategoriler();
+  const seriesCats = useDizilerKategoriler();
   const { progress } = useLibrary();
   const cw = useMemo(() => continueWatching(progress), [progress]);
 
   const heroCatId = seriesCats.data?.[0]?.category_id;
-  const heroSeries = useSeriesList(heroCatId);
+  const heroDiziler = useDizilerList(heroCatId);
 
   const heroItems: HeroItem[] = useMemo(() => {
-    const withArt = (heroSeries.data ?? []).filter((s) => s.backdrop_path?.length || s.cover);
+    const withArt = (heroDiziler.data ?? []).filter((s) => s.backdrop_path?.length || s.cover);
     return sortItems(withArt, "rating")
       .slice(0, 6)
       .map((s) => ({
@@ -38,7 +38,7 @@ export default function HomePage() {
         detailHref: `/series/${s.series_id}`,
         playHref: `/series/${s.series_id}`,
       }));
-  }, [heroSeries.data]);
+  }, [heroDiziler.data]);
 
   const shelves = useMemo(() => {
     const m = (vodCats.data ?? []).slice(0, 6).map((c) => ({ kind: "movie" as const, cat: c }));
@@ -51,14 +51,14 @@ export default function HomePage() {
     return out;
   }, [vodCats.data, seriesCats.data]);
 
-  const heroLoading = seriesCats.isLoading || heroSeries.isLoading;
+  const heroLoading = seriesCats.isLoading || heroDiziler.isLoading;
 
   return (
     <>
-      <TopBar title="Lumen" />
+      <TopBar />
 
       <div className="space-y-8 px-5 pt-6 sm:px-8">
-        <KineticTitle eyebrow="Welcome back" text="What will you watch tonight?" />
+        <KineticTitle eyebrow="Tekrar hoş geldin" text="Bu akşam ne izleyeceksin?" />
 
         {/* bento mosaic */}
         <div className="grid auto-rows-[168px] grid-cols-2 gap-4 lg:grid-cols-6">
@@ -73,16 +73,16 @@ export default function HomePage() {
           ) : (
             <NavTile
               href="/movies"
-              title="Movies"
-              subtitle="Browse the film library"
+              title="Filmler"
+              subtitle="Film arşivine göz at"
               icon="film"
               tint="iris"
               className="col-span-2 row-span-1 lg:col-span-2"
             />
           )}
 
-          <NavTile href="/live" title="Live TV" subtitle="Channels & EPG" icon="live" tint="mint" className="col-span-1 row-span-1" />
-          <NavTile href="/favourites" title="My List" subtitle="Saved for later" icon="heart" tint="iris" className="col-span-1 row-span-1" />
+          <NavTile href="/live" title="Canlı TV" subtitle="Kanallar ve EPG" icon="live" tint="mint" className="col-span-1 row-span-1" />
+          <NavTile href="/favourites" title="Listem" subtitle="Daha sonra izlemek için kaydedildi" icon="heart" tint="iris" className="col-span-1 row-span-1" />
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export default function HomePage() {
 
 function CategoryShelf({ kind, catId, title }: { kind: "movie" | "series"; catId: string; title: string }) {
   const movies = useVodStreams(kind === "movie" ? catId : undefined, kind === "movie");
-  const series = useSeriesList(kind === "series" ? catId : undefined, kind === "series");
+  const series = useDizilerList(kind === "series" ? catId : undefined, kind === "series");
   const q = kind === "movie" ? movies : series;
 
   if (q.isLoading) return <ShelfSkeleton title={title} />;

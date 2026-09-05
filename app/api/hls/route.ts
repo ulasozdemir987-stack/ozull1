@@ -35,7 +35,7 @@ export async function GET(req: Request) {
   try {
     creds = await requireSession();
   } catch {
-    return new Response("Not authenticated", { status: 401 });
+    return new Response("Kimlik doğrulaması yapılmadı", { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -62,7 +62,7 @@ export async function GET(req: Request) {
       signal: AbortSignal.timeout(12_000),
     });
   } catch (e) {
-    return new Response(`HLS upstream failed: ${(e as Error).message}`, { status: 502 });
+    return new Response(`HLS üst sunucu hatası: ${(e as Error).message}`, { status: 502 });
   }
   if (!res.ok) return new Response(`HLS upstream ${res.status}`, { status: res.status });
 
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
   }
 
   const finalUrl = res.url || playlistUrl; // honor redirects for relative resolution
-  const rewritten = rewritePlaylist(text, finalUrl);
+  const rewritten = rewriteOynatlist(text, finalUrl);
 
   return new Response(rewritten, {
     headers: {
@@ -84,7 +84,7 @@ export async function GET(req: Request) {
   });
 }
 
-function rewritePlaylist(text: string, playlistUrl: string): string {
+function rewriteOynatlist(text: string, playlistUrl: string): string {
   const base = new URL(playlistUrl);
   const resolve = (u: string) => {
     try {

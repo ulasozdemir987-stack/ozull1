@@ -2,20 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LayoutGrid, List, Play, Tv, Heart } from "lucide-react";
-import { useLiveCategories, useLiveStreams, useEpg } from "@/lib/hooks";
+import { LayoutGrid, List, Oynat, Tv, Heart } from "lucide-react";
+import { useCanlıKategoriler, useCanlıStreams, useEpg } from "@/lib/hooks";
 import { FilterBar } from "./FilterBar";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { PosterGridSkeleton } from "@/components/ui/Skeleton";
 import { useLibrary } from "@/store/library";
 import { useUI, DEFAULT_FILTER } from "@/store/ui";
 import { sortItems, type SortKey, cleanName, cn } from "@/lib/utils";
-import type { LiveStream } from "@/lib/xtream/types";
+import type { CanlıStream } from "@/lib/xtream/types";
 
 const PAGE = 80;
 
-export function LiveBrowser() {
-  const { data: cats = [] } = useLiveCategories();
+export function CanlıBrowser() {
+  const { data: cats = [] } = useCanlıKategoriler();
   const filter = useUI((s) => s.filters.live ?? DEFAULT_FILTER);
   const patchFilter = useUI((s) => s.patchFilter);
   const category = filter.category || "all"; // live defaults to All (its full list is small)
@@ -27,7 +27,7 @@ export function LiveBrowser() {
   const setQuery = (q: string) => patchFilter("live", { query: q });
   const setView = (v: "grid" | "list") => patchFilter("live", { view: v });
 
-  const { data, isLoading, isError, error } = useLiveStreams(category === "all" ? undefined : category);
+  const { data, isLoading, isError, error } = useCanlıStreams(category === "all" ? undefined : category);
 
   const filtered = useMemo(() => {
     let items = data ?? [];
@@ -76,7 +76,7 @@ export function LiveBrowser() {
       ) : isError ? (
         <p className="px-8 py-16 text-center text-sm text-red-300">{(error as Error)?.message}</p>
       ) : filtered.length === 0 ? (
-        <p className="px-8 py-24 text-center text-sm text-fog-500">No channels here.</p>
+        <p className="px-8 py-24 text-center text-sm text-fog-500">Burada kanal yok.</p>
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-3 px-5 py-5 sm:grid-cols-3 sm:px-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {shown.map((c) => <ChannelTile key={c.stream_id} channel={c} />)}
@@ -105,11 +105,11 @@ function ViewBtn({ active, onClick, children }: { active: boolean; onClick: () =
   );
 }
 
-function watchHref(c: LiveStream) {
+function watchHref(c: CanlıStream) {
   return `/watch?type=live&id=${c.stream_id}&ext=ts&title=${encodeURIComponent(cleanName(c.name))}`;
 }
 
-function ChannelTile({ channel }: { channel: LiveStream }) {
+function ChannelTile({ channel }: { channel: CanlıStream }) {
   const { isFav, toggleFav } = useLibrary();
   const fav = isFav("live", channel.stream_id);
   return (
@@ -144,14 +144,14 @@ function ChannelTile({ channel }: { channel: LiveStream }) {
       <p className="line-clamp-2 text-center text-sm font-medium leading-snug">{cleanName(channel.name)}</p>
       <span className="absolute inset-0 grid place-items-center rounded-[--radius-card] bg-ink-950/40 opacity-0 transition-opacity group-hover:opacity-100">
         <span className="grid h-11 w-11 place-items-center rounded-full bg-iris-400 text-ink-950">
-          <Play className="h-5 w-5 translate-x-0.5 fill-ink-950" />
+          <Oynat className="h-5 w-5 translate-x-0.5 fill-ink-950" />
         </span>
       </span>
     </Link>
   );
 }
 
-function ChannelRow({ channel }: { channel: LiveStream }) {
+function ChannelRow({ channel }: { channel: CanlıStream }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const [seen, setSeen] = useState(false);
   useEffect(() => {
@@ -197,12 +197,12 @@ function ChannelRow({ channel }: { channel: LiveStream }) {
             </div>
           </>
         ) : (
-          <p className="truncate text-xs text-fog-500">{seen ? "No guide data" : ""}</p>
+          <p className="truncate text-xs text-fog-500">{seen ? "Rehber verisi yok" : ""}</p>
         )}
       </div>
       {next && <p className="hidden w-40 shrink-0 truncate text-right text-xs text-fog-500 md:block">Next: {next.title}</p>}
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-800 text-fog-400 transition-colors group-hover:bg-iris-400 group-hover:text-ink-950">
-        <Play className="h-4 w-4 translate-x-0.5" />
+        <Oynat className="h-4 w-4 translate-x-0.5" />
       </span>
     </Link>
   );

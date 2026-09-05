@@ -6,26 +6,26 @@ export const runtime = "nodejs";
 
 // Curated iptv-org categories (free, publicly available channels).
 const CATEGORIES: Array<{ id: string; name: string }> = [
-  { id: "news", name: "News" },
-  { id: "sports", name: "Sports" },
-  { id: "movies", name: "Movies" },
-  { id: "series", name: "Series" },
-  { id: "entertainment", name: "Entertainment" },
-  { id: "music", name: "Music" },
-  { id: "documentary", name: "Documentary" },
-  { id: "kids", name: "Kids" },
-  { id: "comedy", name: "Comedy" },
-  { id: "lifestyle", name: "Lifestyle" },
-  { id: "science", name: "Science" },
-  { id: "travel", name: "Travel" },
-  { id: "culture", name: "Culture" },
-  { id: "cooking", name: "Cooking" },
-  { id: "education", name: "Education" },
-  { id: "family", name: "Family" },
-  { id: "business", name: "Business" },
-  { id: "classic", name: "Classic" },
-  { id: "religious", name: "Religious" },
-  { id: "animation", name: "Animation" },
+  { id: "news", name: "Haberler" },
+  { id: "sports", name: "Spor" },
+  { id: "movies", name: "Filmler" },
+  { id: "series", name: "Diziler" },
+  { id: "entertainment", name: "Eğlence" },
+  { id: "music", name: "Müzik" },
+  { id: "documentary", name: "Belgesel" },
+  { id: "kids", name: "Çocuk" },
+  { id: "comedy", name: "Komedi" },
+  { id: "lifestyle", name: "Yaşam" },
+  { id: "science", name: "Bilim" },
+  { id: "travel", name: "Seyahat" },
+  { id: "culture", name: "Kültür" },
+  { id: "cooking", name: "Yemek" },
+  { id: "education", name: "Eğitim" },
+  { id: "family", name: "Aile" },
+  { id: "business", name: "İş" },
+  { id: "classic", name: "Klasik" },
+  { id: "religious", name: "Dini" },
+  { id: "animation", name: "Animasyon" },
 ];
 
 // Curated popular countries (iptv-org playlist codes, verified to exist).
@@ -92,7 +92,7 @@ function parseM3U(text: string): FreeChannel[] {
 }
 
 /**
- * Free Live TV from the public iptv-org lists.
+ * Free Canlı TV from the public iptv-org lists.
  *   GET /api/freetv?list=categories   -> curated category list
  *   GET /api/freetv?category=news     -> channels in that category
  */
@@ -100,7 +100,7 @@ export async function GET(req: Request) {
   try {
     await requireSession();
   } catch {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ error: "Kimlik doğrulaması yapılmadı" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);

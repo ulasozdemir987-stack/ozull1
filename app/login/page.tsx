@@ -1,187 +1,21 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Tv, Plus, Trash2, ArrowRight } from "lucide-react";
+import { Loader2,Tv,Plus,Trash2,ArrowRight } from "lucide-react";
 import { api } from "@/lib/api";
 import { useLibrary } from "@/store/library";
 import { normalizeBaseUrl } from "@/lib/xtream/urls";
 import type { Profile } from "@/lib/xtream/types";
 import { cn } from "@/lib/utils";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { profiles, addProfile, removeProfile } = useLibrary();
-  const [baseUrl, setBaseUrl] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [label, setLabel] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    setShowForm(profiles.length === 0);
-  }, [profiles.length]);
-
-  async function connect(creds: { baseUrl: string; username: string; password: string }, save?: string) {
-    setBusy(true);
-    setError(null);
-    try {
-      const url = normalizeBaseUrl(creds.baseUrl);
-      const res = await api.login(url, creds.username, creds.password);
-      if (save !== undefined) {
-        const p: Profile = {
-          id: `${url}|${creds.username}`,
-          label: save || res.user_info.username || url.replace(/^https?:\/\//, ""),
-          baseUrl: url,
-          username: creds.username,
-          password: creds.password,
-        };
-        addProfile(p);
-      }
-      router.replace("/");
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Login failed");
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="relative grid min-h-dvh place-items-center overflow-hidden px-5 py-12">
-      {/* cinematic backdrop */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/3 h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-iris-400/12 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 h-[40vh] w-[40vh] rounded-full bg-indigo-500/10 blur-[120px]" />
-      </div>
-
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="Lumen" className="mb-4 h-16 w-16 rounded-2xl shadow-xl glow-iris" />
-          <h1 className="text-3xl font-bold tracking-tight">Lumen</h1>
-          <p className="mt-1.5 text-sm text-fog-400">
-            Sign in with your Xtream / X3U stream codes.
-          </p>
-        </div>
-
-        {/* saved profiles */}
-        {profiles.length > 0 && !showForm && (
-          <div className="space-y-2.5">
-            {profiles.map((p) => (
-              <button
-                key={p.id}
-                disabled={busy}
-                onClick={() => connect(p)}
-                className="group flex w-full items-center gap-3 rounded-2xl glass p-4 text-left transition-all hover:glow-iris disabled:opacity-60"
-              >
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink-700 text-iris-400">
-                  <Tv className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{p.label}</span>
-                  <span className="block truncate text-xs text-fog-500">
-                    {p.username} · {p.baseUrl.replace(/^https?:\/\//, "")}
-                  </span>
-                </span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeProfile(p.id);
-                  }}
-                  className="grid h-8 w-8 place-items-center rounded-lg text-fog-500 opacity-0 transition-all hover:bg-red-500/15 hover:text-red-300 group-hover:opacity-100"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </span>
-                <ArrowRight className="h-4 w-4 text-fog-500 transition-transform group-hover:translate-x-0.5 group-hover:text-iris-400" />
-              </button>
-            ))}
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 py-3.5 text-sm text-fog-400 transition-colors hover:border-iris-400/40 hover:text-foreground"
-            >
-              <Plus className="h-4 w-4" /> Add another account
-            </button>
-          </div>
-        )}
-
-        {/* form */}
-        {showForm && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              connect({ baseUrl, username, password }, label);
-            }}
-            className="space-y-3.5 rounded-3xl glass p-6"
-          >
-            <Field label="Server URL" placeholder="http://your-provider.com:8080" value={baseUrl} onChange={setBaseUrl} autoFocus />
-            <Field label="Username" placeholder="username" value={username} onChange={setUsername} />
-            <Field label="Password" placeholder="••••••••" type="password" value={password} onChange={setPassword} />
-            <Field label="Nickname (optional)" placeholder="My IPTV" value={label} onChange={setLabel} />
-
-            {error && (
-              <p className="rounded-xl bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={busy}
-              className={cn(
-                "flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-iris-300 to-iris-500 py-3 font-semibold text-ink-950 transition-all hover:brightness-110 disabled:opacity-60",
-              )}
-            >
-              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Connect <ArrowRight className="h-4 w-4" /></>}
-            </button>
-
-            {profiles.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="w-full py-1 text-center text-xs text-fog-500 hover:text-foreground"
-              >
-                ← Back to saved accounts
-              </button>
-            )}
-          </form>
-        )}
-
-        <p className="mt-6 text-center text-xs text-fog-500">
-          Credentials are stored locally on this device only.
-        </p>
-      </div>
-    </div>
-  );
+type RemoteProfile={id:string;label:string;base_url:string;username:string};
+export default function LoginPage(){
+ const router=useRouter(); const {setProfiles,addProfile,removeProfile}=useLibrary(); const [profiles,setLocalProfiles]=useState<RemoteProfile[]>([]); const [showForm,setShowForm]=useState(false); const [loading,setLoading]=useState(true); const [busy,setBusy]=useState(false); const [baseUrl,setBaseUrl]=useState(""); const [username,setUsername]=useState(""); const [password,setPassword]=useState(""); const [label,setLabel]=useState(""); const [error,setError]=useState<string|null>(null);
+ useEffect(()=>{let dead=false;(async()=>{try{const s=await api.session();if(s.authenticated){router.replace("/");return;}const r=await fetch("/api/profiles",{credentials:"same-origin"});const d=await r.json();if(!dead){setLocalProfiles(d.profiles??[]);setProfiles((d.profiles??[]).map((p:RemoteProfile)=>({id:p.id,label:p.label,baseUrl:p.base_url,username:p.username,password:""})));setShowForm(!(d.profiles?.length));}}catch{}finally{if(!dead)setLoading(false)}})();return()=>{dead=true}},[router,setProfiles]);
+ async function select(id:string){setBusy(true);setError(null);try{const r=await fetch("/api/profiles",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id}),credentials:"same-origin"});const d=await r.json();if(!r.ok)throw new Error(d.error);localStorage.removeItem("lumen-manual-logout");router.replace("/");router.refresh();}catch(e){setError(e instanceof Error?e.message:"Profil seçilemedi");setBusy(false)}}
+ async function create(e:React.FormEvent){e.preventDefault();setBusy(true);setError(null);try{const r=await fetch("/api/profiles",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({baseUrl:normalizeBaseUrl(baseUrl),username,password,label}),credentials:"same-origin"});const d=await r.json();if(!r.ok)throw new Error(d.error);const p=d.profile as RemoteProfile;setLocalProfiles(x=>[p,...x.filter(y=>y.id!==p.id)]);addProfile({id:p.id,label:p.label,baseUrl:p.base_url,username:p.username,password:""} as Profile);localStorage.removeItem("lumen-manual-logout");router.replace("/");router.refresh();}catch(e){setError(e instanceof Error?e.message:"Profil oluşturulamadı");setBusy(false)}}
+ async function remove(id:string){await fetch("/api/profiles",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id}),credentials:"same-origin"});setLocalProfiles(x=>x.filter(p=>p.id!==id));removeProfile(id);}
+ if(loading)return <div className="grid min-h-dvh place-items-center"><Loader2 className="h-7 w-7 animate-spin text-iris-400"/></div>;
+ return <div className="relative grid min-h-dvh place-items-center overflow-hidden px-5 py-12"><div className="pointer-events-none absolute inset-0 -z-10"><div className="absolute left-1/2 top-1/3 h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-iris-400/12 blur-[120px]"/><div className="absolute bottom-0 right-0 h-[40vh] w-[40vh] rounded-full bg-indigo-500/10 blur-[120px]"/></div><div className="w-full max-w-md"><div className="mb-8 text-center"><img src="/logo.svg" alt="" className="mx-auto mb-4 h-16 w-16 rounded-2xl shadow-xl glow-iris"/><h1 className="text-3xl font-bold tracking-tight">Kim izliyor?</h1><p className="mt-2 text-sm text-fog-400">Profilinizi seçin veya yeni bir hesap ekleyin.</p></div>{profiles.length>0&&!showForm&&<div className="space-y-2.5">{profiles.map(p=><button key={p.id} disabled={busy} onClick={()=>select(p.id)} className="group flex w-full items-center gap-3 rounded-2xl glass p-4 text-left transition-all hover:glow-iris disabled:opacity-60"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-ink-700 text-iris-400"><Tv className="h-5 w-5"/></span><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{p.label}</span><span className="block truncate text-xs text-fog-500">{p.username} · {p.base_url.replace(/^https?:\/\//,"")}</span></span><span role="button" tabIndex={0} onClick={e=>{e.stopPropagation();void remove(p.id)}} className="grid h-8 w-8 place-items-center rounded-lg text-fog-500 opacity-0 transition-all hover:bg-red-500/15 hover:text-red-300 group-hover:opacity-100"><Trash2 className="h-4 w-4"/></span><ArrowRight className="h-4 w-4 text-fog-500"/></button>)}<button onClick={()=>setShowForm(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 py-3.5 text-sm text-fog-400 hover:border-iris-400/40 hover:text-foreground"><Plus className="h-4 w-4"/> Hesap Ekle</button></div>}{showForm&&<form onSubmit={create} className="space-y-3.5 rounded-3xl glass p-6"><Field label="Sunucu URL'si" value={baseUrl} onChange={setBaseUrl} placeholder="https://sunucu.com:443" autoFocus/><Field label="Kullanıcı adı" value={username} onChange={setUsername} placeholder="Kullanıcı adı"/><Field label="Şifre" value={password} onChange={setPassword} placeholder="••••••••" type="password"/><Field label="Profil adı" value={label} onChange={setLabel} placeholder="Örn. Ulaş"/>{error&&<p className="rounded-xl bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300">{error}</p>}<button disabled={busy} className={cn("flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-iris-300 to-iris-500 py-3 font-semibold text-ink-950 disabled:opacity-60")}>{busy?<Loader2 className="h-5 w-5 animate-spin"/>:<>Hesabı Kaydet <ArrowRight className="h-4 w-4"/></>}</button>{profiles.length>0&&<button type="button" onClick={()=>setShowForm(false)} className="w-full py-1 text-center text-xs text-fog-500">← Profillere dön</button>}</form>}</div></div>;
 }
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-  autoFocus,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-  autoFocus?: boolean;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-fog-400">{label}</span>
-      <input
-        type={type}
-        value={value}
-        autoFocus={autoFocus}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-white/8 bg-ink-900/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-fog-600 transition-colors focus:border-iris-400/60 focus:outline-none"
-      />
-    </label>
-  );
-}
+function Field({label,value,onChange,type="text",placeholder,autoFocus}:{label:string;value:string;onChange:(v:string)=>void;type?:string;placeholder?:string;autoFocus?:boolean}){return <label className="block"><span className="mb-1.5 block text-xs font-medium text-fog-400">{label}</span><input type={type} value={value} autoFocus={autoFocus} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-xl border border-white/8 bg-ink-900/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-fog-600 focus:border-iris-400/60 focus:outline-none"/></label>}

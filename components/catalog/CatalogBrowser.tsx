@@ -23,7 +23,7 @@ export function CatalogBrowser<T extends Sortable>({
   useItems,
   toPoster,
   hrefFor,
-  emptyLabel = "No titles found.",
+  emptyLabel = "İçerik bulunamadı.",
 }: {
   sectionKey: string;
   categories: Category[];

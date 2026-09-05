@@ -44,3 +44,12 @@ docker run --rm -p 3000:3000 -e SITE_PASSWORD=changeme lumen
 - Your IPTV credentials live on that host and the URL is public — **always set
   `SITE_PASSWORD`**.
 - You are responsible for complying with your IPTV provider's terms and local law.
+
+
+## Kalıcı profil / kütüphane veritabanı
+
+Bu sürüm profilleri, favorileri ve izleme ilerlemesini PostgreSQL üzerinde saklar. Vercel'e deploy ederken bir PostgreSQL sağlayıcısını (ör. Vercel Marketplace üzerinden Neon) projeye bağlayın ve `DATABASE_URL` ortam değişkeninin oluştuğunu kontrol edin. Tablolar ilk istek sırasında otomatik oluşturulur; ayrıca SQL çalıştırmanız gerekmez.
+
+İlk açılışta **Kim izliyor?** ekranından profil ekleyin. Profil seçimi Xtream bilgilerini sunucuda saklar; şifre tarayıcı `localStorage`'ına yazılmaz. Aynı profil farklı cihazlardan seçildiğinde favoriler ve izleme ilerlemesi ortak veritabanından gelir.
+
+> Not: Siteyi internete açık yayınlayacaksanız `SITE_PASSWORD` ile siteye erişimi korumanız önerilir.

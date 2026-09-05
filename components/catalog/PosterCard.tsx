@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import Tilt from "react-parallax-tilt";
 import { useQueryClient } from "@tanstack/react-query";
-import { Play, Star } from "lucide-react";
+import { Oynat, Star } from "lucide-react";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { api } from "@/lib/api";
 import { cleanName, ratingNum, yearFrom, cn } from "@/lib/utils";
@@ -98,7 +98,7 @@ export function PosterCard({
           className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full glass-bright opacity-0 transition-all duration-300 group-hover:opacity-100"
           style={{ transform: "translate(-50%, -50%) translateZ(50px)" }}
         >
-          <Play className="h-6 w-6 translate-x-0.5 fill-iris-300 text-iris-300" />
+          <Oynat className="h-6 w-6 translate-x-0.5 fill-iris-300 text-iris-300" />
         </span>
 
         {/* title overlay */}

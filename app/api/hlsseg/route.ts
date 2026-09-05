@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   try {
     await requireSession();
   } catch {
-    return new Response("Not authenticated", { status: 401 });
+    return new Response("Kimlik doğrulaması yapılmadı", { status: 401 });
   }
 
   const token = new URL(req.url).searchParams.get("t");
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   try {
     upstream = await fetch(target, { headers, redirect: "follow", signal: req.signal });
   } catch (e) {
-    return new Response(`Segment fetch failed: ${(e as Error).message}`, { status: 502 });
+    return new Response(`Segment alınamadı: ${(e as Error).message}`, { status: 502 });
   }
   if (!upstream.ok && upstream.status !== 206) {
     return new Response(`Segment upstream ${upstream.status}`, { status: upstream.status });

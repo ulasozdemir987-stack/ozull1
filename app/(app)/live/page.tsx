@@ -3,10 +3,10 @@
 import { TopBar } from "@/components/layout/TopBar";
 import { LiveBrowser } from "@/components/catalog/LiveBrowser";
 
-export default function LivePage() {
+export default function CanlıPage() {
   return (
     <>
-      <TopBar title="Live TV" />
+      <TopBar title="Canlı TV" />
       <LiveBrowser />
     </>
   );

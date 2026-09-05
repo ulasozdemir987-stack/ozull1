@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
-  Play, Pause, Volume2, VolumeX, Maximize, Minimize,
+  Oynat, Pause, Ses seviyesi2, Ses seviyesiX, Maximize, Minimize,
   PictureInPicture2, Loader2, AlertTriangle, SkipForward, ArrowLeft,
   RotateCcw, RotateCw, Captions, Gauge, Check, Upload,
 } from "lucide-react";
-import { attach, type EngineHandle, type PlayerTrack } from "@/lib/player/engine";
+import { attach, type EngineHandle } from "@/lib/player/engine";
 import { formatTime, cn } from "@/lib/utils";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -19,10 +19,10 @@ function srtToVtt(text: string): string {
   return /^WEBVTT/.test(body.trimStart()) ? body : `WEBVTT\n\n${body}`;
 }
 
-export function VideoPlayer({
+export function VideoOynater({
   sources,
   ext,
-  isLive,
+  isCanlı,
   title,
   startTime = 0,
   hasNext,
@@ -36,7 +36,7 @@ export function VideoPlayer({
   /** Ordered candidate URLs — first is tried, next used on failure (direct → proxy). */
   sources: string[];
   ext: string;
-  isLive: boolean;
+  isCanlı: boolean;
   title: string;
   startTime?: number;
   hasNext?: boolean;
@@ -56,9 +56,9 @@ export function VideoPlayer({
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const subFileRef = useRef<HTMLInputElement>(null);
 
-  const [playing, setPlaying] = useState(false);
+  const [playing, setOynating] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [volume, setSes seviyesi] = useState(1);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffering, setBuffering] = useState(true);
@@ -72,12 +72,7 @@ export function VideoPlayer({
   const [subName, setSubName] = useState<string | null>(null);
   const [capMenu, setCapMenu] = useState(false);
   const [trackList, setTrackList] = useState<Array<{ index: number; label: string }>>([]);
-  const [activeTrack, setActiveTrack] = useState<number>(-1); // native text track
-  const [engineAudioTracks, setEngineAudioTracks] = useState<PlayerTrack[]>([]);
-  const [engineSubtitleTracks, setEngineSubtitleTracks] = useState<PlayerTrack[]>([]);
-  const [activeAudioTrack, setActiveAudioTrack] = useState<number>(-1);
-  const [activeEngineSubtitle, setActiveEngineSubtitle] = useState<number>(-1);
-  const [audioMenu, setAudioMenu] = useState(false);
+  const [activeTrack, setActiveTrack] = useState<number>(-1); // -1 = off
 
   // pseudo-seek for remuxed streams: reload ffmpeg from an offset
   const [seekBase, setSeekBase] = useState(0);
@@ -87,7 +82,7 @@ export function VideoPlayer({
   const isTranscode = !!rawSrc && rawSrc.includes("/api/transcode");
   // appending &t= makes the attach effect reload ffmpeg from that timestamp
   const src = isTranscode && seekBase > 0 ? `${rawSrc}&t=${Math.floor(seekBase)}` : rawSrc;
-  const seekable = !isLive; // transcoded streams seek by reloading
+  const seekable = !isCanlı; // transcoded streams seek by reloading
   const total = isTranscode && knownDuration > 0 ? knownDuration : duration;
   const displayCurrent = isTranscode ? seekBase + current : current;
 
@@ -122,25 +117,11 @@ export function VideoPlayer({
     (async () => {
       try {
         engineRef.current?.destroy();
-        setEngineAudioTracks([]);
-        setEngineSubtitleTracks([]);
-        setActiveAudioTrack(-1);
-        setActiveEngineSubtitle(-1);
-        engineRef.current = await attach(video, {
-          url: src,
-          ext,
-          isLive,
-          onTracks: ({ audio, subtitles: hlsSubs }) => {
-            if (cancelled) return;
-            setEngineAudioTracks(audio);
-            setEngineSubtitleTracks(hlsSubs);
-            if (audio.length && activeAudioTrack < 0) setActiveAudioTrack(0);
-          },
-        });
+        engineRef.current = await attach(video, { url: src, ext, isCanlı });
         if (cancelled) return;
         video.play().catch(() => {});
       } catch (e) {
-        if (!cancelled) tryFallback((e as Error).message || "Playback failed");
+        if (!cancelled) tryFallback((e as Error).message || "Oynatback failed");
       }
     })();
 
@@ -167,23 +148,23 @@ export function VideoPlayer({
       engineRef.current?.destroy();
       engineRef.current = null;
     };
-  }, [src, ext, isLive, tryFallback, srcIdx, sources.length]);
+  }, [src, ext, isCanlı, tryFallback, srcIdx, sources.length]);
 
   // media element events
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
+    const onOynat = () => setOynating(true);
+    const onPause = () => setOynating(false);
     const onWaiting = () => setBuffering(true);
-    const onPlaying = () => {
+    const onOynating = () => {
       setBuffering(false);
       setError(null); // recovered (e.g. slow start after the watchdog fired)
     };
     const onLoaded = () => {
       setDuration(v.duration || 0);
       // native VOD resumes via currentTime; transcoded streams resume via ?t= reload
-      if (!isLive && !isTranscode && startTime > 0 && startTime < (v.duration || Infinity)) {
+      if (!isCanlı && !isTranscode && startTime > 0 && startTime < (v.duration || Infinity)) {
         v.currentTime = startTime;
       }
     };
@@ -201,25 +182,25 @@ export function VideoPlayer({
     const onErr = () =>
       tryFallback("This title isn’t available from your provider right now, or can’t be played in the browser. Try another title.");
 
-    v.addEventListener("play", onPlay);
+    v.addEventListener("play", onOynat);
     v.addEventListener("pause", onPause);
     v.addEventListener("waiting", onWaiting);
-    v.addEventListener("playing", onPlaying);
+    v.addEventListener("playing", onOynating);
     v.addEventListener("loadedmetadata", onLoaded);
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("ended", onEnd);
     v.addEventListener("error", onErr);
     return () => {
-      v.removeEventListener("play", onPlay);
+      v.removeEventListener("play", onOynat);
       v.removeEventListener("pause", onPause);
       v.removeEventListener("waiting", onWaiting);
-      v.removeEventListener("playing", onPlaying);
+      v.removeEventListener("playing", onOynating);
       v.removeEventListener("loadedmetadata", onLoaded);
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("ended", onEnd);
       v.removeEventListener("error", onErr);
     };
-  }, [ext, isLive, startTime, onProgress, onEnded, tryFallback, isTranscode, knownDuration, seekBase]);
+  }, [ext, isCanlı, startTime, onProgress, onEnded, tryFallback, isTranscode, knownDuration, seekBase]);
 
   useEffect(() => {
     const onFs = () => setFullscreen(!!document.fullscreenElement);
@@ -227,7 +208,7 @@ export function VideoPlayer({
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  const togglePlay = useCallback(() => {
+  const toggleOynat = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) v.play().catch(() => {});
@@ -236,7 +217,7 @@ export function VideoPlayer({
 
   const seek = useCallback(
     (t: number) => {
-      if (isLive) return;
+      if (isCanlı) return;
       const target = Math.max(0, Math.min(t, total || Infinity));
       if (isTranscode) {
         // restart ffmpeg from the new offset (the attach effect reloads on src change)
@@ -247,7 +228,7 @@ export function VideoPlayer({
         if (v) v.currentTime = target;
       }
     },
-    [isLive, isTranscode, total],
+    [isCanlı, isTranscode, total],
   );
 
   const toggleMute = useCallback(() => {
@@ -257,12 +238,12 @@ export function VideoPlayer({
     setMuted(v.muted);
   }, []);
 
-  const changeVolume = (val: number) => {
+  const changeSes seviyesi = (val: number) => {
     const v = videoRef.current;
     if (!v) return;
     v.volume = val;
     v.muted = val === 0;
-    setVolume(val);
+    setSes seviyesi(val);
     setMuted(val === 0);
   };
 
@@ -344,21 +325,6 @@ export function VideoPlayer({
     };
   }, [subUrl, extSubs, src]);
 
-  const selectAudio = useCallback((idx: number) => {
-    const engine = engineRef.current;
-    if (!engine?.setAudioTrack) return;
-    engine.setAudioTrack(idx);
-    setActiveAudioTrack(idx);
-    setAudioMenu(false);
-  }, []);
-
-  const selectEngineSubtitle = useCallback((idx: number) => {
-    const engine = engineRef.current;
-    if (!engine?.setSubtitleTrack) return;
-    engine.setSubtitleTrack(idx);
-    setActiveEngineSubtitle(idx);
-  }, []);
-
   const showControls = useCallback(() => {
     setControlsOn(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -372,11 +338,11 @@ export function VideoPlayer({
     const onKey = (e: KeyboardEvent) => {
       if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) return;
       switch (e.key) {
-        case " ": e.preventDefault(); togglePlay(); break;
+        case " ": e.preventDefault(); toggleOynat(); break;
         case "ArrowRight": if (seekable) seek(displayCurrent + 10); break;
         case "ArrowLeft": if (seekable) seek(displayCurrent - 10); break;
-        case "ArrowUp": changeVolume(Math.min(1, volume + 0.1)); break;
-        case "ArrowDown": changeVolume(Math.max(0, volume - 0.1)); break;
+        case "ArrowUp": changeSes seviyesi(Math.min(1, volume + 0.1)); break;
+        case "ArrowDown": changeSes seviyesi(Math.max(0, volume - 0.1)); break;
         case "f": toggleFs(); break;
         case "m": toggleMute(); break;
         case "c":
@@ -389,7 +355,7 @@ export function VideoPlayer({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [displayCurrent, volume, seekable, togglePlay, seek, toggleFs, toggleMute, onBack, showControls, trackList, activeTrack, selectTrack, engineSubtitleTracks, activeEngineSubtitle, selectEngineSubtitle, hasNext, onNext]);
+  }, [displayCurrent, volume, seekable, toggleOynat, seek, toggleFs, toggleMute, onBack, showControls, trackList, activeTrack, selectTrack, hasNext, onNext]);
 
   return (
     <div
@@ -405,7 +371,7 @@ export function VideoPlayer({
         ref={videoRef}
         className="absolute inset-0 h-full w-full object-contain"
         playsInline
-        onClick={togglePlay}
+        onClick={toggleOynat}
         onDoubleClick={toggleFs}
       >
         {extSubs.map((s, i) => (
@@ -439,13 +405,13 @@ export function VideoPlayer({
         <div className="absolute inset-0 grid place-items-center bg-ink-950/90 px-6 text-center">
           <div className="max-w-md">
             <AlertTriangle className="mx-auto mb-4 h-10 w-10 text-iris-400" />
-            <p className="text-lg font-semibold">Can’t play this stream</p>
+            <p className="text-lg font-semibold">Bu yayın oynatılamıyor</p>
             <p className="mt-2 text-sm text-fog-400">{error}</p>
             <button
               onClick={onBack}
               className="mt-6 rounded-xl bg-ink-700 px-5 py-2.5 text-sm font-medium hover:bg-ink-600"
             >
-              Go back
+              Geri dön
             </button>
           </div>
         </div>
@@ -465,9 +431,9 @@ export function VideoPlayer({
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="min-w-0 pt-1">
-          {isLive && (
+          {isCanlı && (
             <span className="mb-1 inline-flex items-center gap-1.5 rounded bg-red-600 px-2 py-0.5 text-xs font-bold uppercase tracking-wide">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" /> Live
+              <span className="h-1.5 w-1.5 rounded-full bg-white" /> Canlı
             </span>
           )}
           <h2 className="truncate text-lg font-semibold drop-shadow">{title}</h2>
@@ -482,7 +448,7 @@ export function VideoPlayer({
         )}
       >
         {/* seek bar (VOD) */}
-        {!isLive && (
+        {!isCanlı && (
           <div className="mb-3 flex items-center gap-3 text-xs tabular-nums text-fog-300">
             <span className="w-12 text-right">{formatTime(scrub ?? displayCurrent)}</span>
             <input
@@ -509,32 +475,32 @@ export function VideoPlayer({
         )}
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <button onClick={togglePlay} className="text-white transition-transform hover:scale-110" title="Play/Pause (space)">
-            {playing ? <Pause className="h-7 w-7 fill-white" /> : <Play className="h-7 w-7 fill-white" />}
+          <button onClick={toggleOynat} className="text-white transition-transform hover:scale-110" title="Oynat/Pause (space)">
+            {playing ? <Pause className="h-7 w-7 fill-white" /> : <Oynat className="h-7 w-7 fill-white" />}
           </button>
 
           {seekable && (
             <>
-              <button onClick={() => seek(displayCurrent - 10)} className="relative text-white/90 transition-transform hover:scale-110" title="Back 10s (←)">
+              <button onClick={() => seek(displayCurrent - 10)} className="relative text-white/90 transition-transform hover:scale-110" title="10 sn geri (←)">
                 <RotateCcw className="h-6 w-6" />
                 <span className="absolute inset-0 grid place-items-center text-[8px] font-bold">10</span>
               </button>
-              <button onClick={() => seek(displayCurrent + 10)} className="relative text-white/90 transition-transform hover:scale-110" title="Forward 10s (→)">
+              <button onClick={() => seek(displayCurrent + 10)} className="relative text-white/90 transition-transform hover:scale-110" title="10 sn ileri (→)">
                 <RotateCw className="h-6 w-6" />
                 <span className="absolute inset-0 grid place-items-center text-[8px] font-bold">10</span>
               </button>
             </>
           )}
 
-          {!isLive && hasNext && (
-            <button onClick={onNext} className="text-white/90 transition-transform hover:scale-110" title="Next episode (n)">
+          {!isCanlı && hasNext && (
+            <button onClick={onNext} className="text-white/90 transition-transform hover:scale-110" title="Sonraki bölüm (n)">
               <SkipForward className="h-6 w-6 fill-white/90" />
             </button>
           )}
 
           <div className="flex items-center gap-2.5">
-            <button onClick={toggleMute} className="shrink-0 text-white" title="Mute (m)">
-              {muted || volume === 0 ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+            <button onClick={toggleMute} className="shrink-0 text-white" title="Sesi kapat (m)">
+              {muted || volume === 0 ? <Ses seviyesiX className="h-6 w-6" /> : <Ses seviyesi2 className="h-6 w-6" />}
             </button>
             <input
               type="range"
@@ -542,120 +508,66 @@ export function VideoPlayer({
               max={1}
               step={0.05}
               value={muted ? 0 : volume}
-              onChange={(e) => changeVolume(Number(e.target.value))}
-              aria-label="Volume"
+              onChange={(e) => changeSes seviyesi(Number(e.target.value))}
+              aria-label="Ses seviyesi"
               className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-white/25 accent-iris-400 sm:w-24 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
             />
           </div>
 
           <div className="ml-auto flex items-center gap-3 sm:gap-4">
-            {/* audio / dubbing */}
-            {engineAudioTracks.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setAudioMenu((v) => !v)}
-                  className={cn("transition-transform hover:scale-110", activeAudioTrack >= 0 ? "text-iris-400" : "text-white/90")}
-                  title="Audio / dubbing"
-                >
-                  <Volume2 className="h-6 w-6" />
-                </button>
-                {audioMenu && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setAudioMenu(false)} />
-                    <div className="absolute bottom-10 right-0 z-20 max-h-72 w-56 overflow-y-auto rounded-xl panel py-1 text-sm">
-                      <p className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-fog-500">Audio / Dubbing</p>
-                      {engineAudioTracks.map((t) => (
-                        <button
-                          key={t.index}
-                          onClick={() => selectAudio(t.index)}
-                          className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-white/10"
-                        >
-                          <span className="truncate">{t.label}</span>
-                          {activeAudioTrack === t.index && <Check className="h-3.5 w-3.5 shrink-0 text-iris-400" />}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
             {/* subtitles / captions menu */}
-            {(engineSubtitleTracks.length > 0 || trackList.length > 0) && (
-              <div className="relative">
-                <button
-                  onClick={() => setCapMenu((v) => !v)}
-                  className={cn("transition-transform hover:scale-110", (activeTrack >= 0 || activeEngineSubtitle >= 0) ? "text-iris-400" : "text-white/90")}
-                  title="Subtitles (c)"
-                >
-                  <Captions className="h-6 w-6" />
-                </button>
-                {capMenu && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setCapMenu(false)} />
-                    <div className="absolute bottom-10 right-0 z-20 max-h-72 w-56 overflow-y-auto rounded-xl panel py-1 text-sm">
-                      <p className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-fog-500">Subtitles</p>
-                      {engineSubtitleTracks.length > 0 ? (
-                        <>
-                          <button
-                            onClick={() => { selectEngineSubtitle(-1); setCapMenu(false); }}
-                            className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-white/10"
-                          >
-                            <span>Off</span>
-                            {activeEngineSubtitle === -1 && <Check className="h-3.5 w-3.5 text-iris-400" />}
-                          </button>
-                          {engineSubtitleTracks.map((t) => (
-                            <button
-                              key={t.index}
-                              onClick={() => { selectEngineSubtitle(t.index); setCapMenu(false); }}
-                              className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-white/10"
-                            >
-                              <span className="truncate">{t.label}</span>
-                              {activeEngineSubtitle === t.index && <Check className="h-3.5 w-3.5 shrink-0 text-iris-400" />}
-                            </button>
-                          ))}
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => { selectTrack(-1); setCapMenu(false); }}
-                            className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-white/10"
-                          >
-                            <span>Off</span>
-                            {activeTrack === -1 && <Check className="h-3.5 w-3.5 text-iris-400" />}
-                          </button>
-                          {trackList.map((t) => (
-                            <button
-                              key={t.index}
-                              onClick={() => { selectTrack(t.index); setCapMenu(false); }}
-                              className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-white/10"
-                            >
-                              <span className="truncate">{t.label}</span>
-                              {activeTrack === t.index && <Check className="h-3.5 w-3.5 shrink-0 text-iris-400" />}
-                            </button>
-                          ))}
-                        </>
-                      )}
-                      <div className="my-1 h-px bg-white/10" />
+            <div className="relative">
+              <button
+                onClick={() => setCapMenu((v) => !v)}
+                className={cn("transition-transform hover:scale-110", activeTrack >= 0 ? "text-iris-400" : "text-white/90")}
+                title="Altyazılar (c)"
+              >
+                <Captions className="h-6 w-6" />
+              </button>
+              {capMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setCapMenu(false)} />
+                  <div className="absolute bottom-10 right-0 z-20 max-h-72 w-56 overflow-y-auto rounded-xl panel py-1 text-sm">
+                    <p className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-fog-500">Altyazılar</p>
+                    <button
+                      onClick={() => { selectTrack(-1); setCapMenu(false); }}
+                      className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-white/10"
+                    >
+                      <span>Kapalı</span>
+                      {activeTrack === -1 && <Check className="h-3.5 w-3.5 text-iris-400" />}
+                    </button>
+                    {trackList.map((t) => (
                       <button
-                        onClick={() => { subFileRef.current?.click(); setCapMenu(false); }}
-                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-iris-300 hover:bg-white/10"
+                        key={t.index}
+                        onClick={() => { selectTrack(t.index); setCapMenu(false); }}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                       >
-                        <Upload className="h-3.5 w-3.5" /> Load from file…
+                        <span className="truncate">{t.label}</span>
+                        {activeTrack === t.index && <Check className="h-3.5 w-3.5 shrink-0 text-iris-400" />}
                       </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                    ))}
+                    {trackList.length === 0 && (
+                      <p className="px-3 py-1.5 text-xs text-fog-500">Gömülü altyazı bulunamadı.</p>
+                    )}
+                    <div className="my-1 h-px bg-white/10" />
+                    <button
+                      onClick={() => { subFileRef.current?.click(); setCapMenu(false); }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-iris-300 hover:bg-white/10"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Load from file…
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* playback speed */}
-            {!isLive && (
+            {!isCanlı && (
               <div className="relative">
                 <button
                   onClick={() => setSpeedMenu((v) => !v)}
                   className={cn("flex items-center gap-1 transition-transform hover:scale-110", speed !== 1 ? "text-iris-400" : "text-white/90")}
-                  title="Playback speed"
+                  title="Oynatback speed"
                 >
                   <Gauge className="h-6 w-6" />
                   {speed !== 1 && <span className="text-xs font-semibold">{speed}x</span>}
@@ -680,10 +592,10 @@ export function VideoPlayer({
               </div>
             )}
 
-            <button onClick={togglePip} className="text-white/90 transition-transform hover:scale-110" title="Picture in picture">
+            <button onClick={togglePip} className="text-white/90 transition-transform hover:scale-110" title="Resim içinde resim">
               <PictureInPicture2 className="h-6 w-6" />
             </button>
-            <button onClick={toggleFs} className="text-white/90 transition-transform hover:scale-110" title="Fullscreen (f)">
+            <button onClick={toggleFs} className="text-white/90 transition-transform hover:scale-110" title="Tam ekran (f)">
               {fullscreen ? <Minimize className="h-6 w-6" /> : <Maximize className="h-6 w-6" />}
             </button>
           </div>

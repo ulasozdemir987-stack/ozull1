@@ -50,9 +50,9 @@ export type SortKey = "az" | "za" | "added" | "year" | "rating";
 export const SORT_LABELS: Record<SortKey, string> = {
   az: "A → Z",
   za: "Z → A",
-  added: "Recently Added",
-  year: "Year",
-  rating: "Top Rated",
+  added: "Yeni eklenenler",
+  year: "Yıl",
+  rating: "En yüksek puanlı",
 };
 
 interface Sortable {

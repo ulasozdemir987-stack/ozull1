@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Tv, Play, Radio, Heart } from "lucide-react";
+import { Tv, Oynat, Radio, Heart } from "lucide-react";
 import { TopBar } from "@/components/layout/TopBar";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { PosterGridSkeleton } from "@/components/ui/Skeleton";
@@ -22,8 +22,8 @@ export default function FreeTvPage() {
   const query = filter.query;
   const [visible, setVisible] = useState(PAGE);
 
-  const { data: catData } = useQuery({ queryKey: ["freetv", "cats"], queryFn: api.freeTvCategories });
-  const { data: countryData } = useQuery({ queryKey: ["freetv", "countries"], queryFn: api.freeTvCountries });
+  const { data: catData } = useQuery({ queryKey: ["freetv", "cats"], queryFn: api.freeTvKategoriler });
+  const { data: countryData } = useQuery({ queryKey: ["freetv", "countries"], queryFn: api.freeTvÜlkeler });
 
   const pickerOptions = useMemo(() => {
     const src = mode === "country" ? countryData?.countries : catData?.categories;
@@ -61,13 +61,13 @@ export default function FreeTvPage() {
 
   return (
     <>
-      <TopBar title="Free TV" />
+      <TopBar title="Ücretsiz TV" />
 
       <div className="sticky top-[57px] z-30 flex flex-wrap items-center gap-2.5 border-b border-white/5 bg-ink-900/70 px-5 py-3 backdrop-blur-xl sm:px-8">
         {/* category / country toggle */}
         <div className="flex items-center gap-1 rounded-full border border-white/10 bg-ink-850/80 p-1">
-          <ModeBtn active={mode === "cat"} onClick={() => patchFilter("freetv", { mode: "cat" })}>Categories</ModeBtn>
-          <ModeBtn active={mode === "country"} onClick={() => patchFilter("freetv", { mode: "country" })}>Countries</ModeBtn>
+          <ModeBtn active={mode === "cat"} onClick={() => patchFilter("freetv", { mode: "cat" })}>Kategoriler</ModeBtn>
+          <ModeBtn active={mode === "country"} onClick={() => patchFilter("freetv", { mode: "country" })}>Ülkeler</ModeBtn>
         </div>
 
         <CategoryPicker
@@ -81,7 +81,7 @@ export default function FreeTvPage() {
           <input
             value={query}
             onChange={(e) => patchFilter("freetv", { query: e.target.value })}
-            placeholder="Filter channels…"
+            placeholder="Kanalları filtrele…"
             className="w-full bg-transparent text-sm placeholder:text-fog-500 focus:outline-none"
           />
         </div>
@@ -93,7 +93,7 @@ export default function FreeTvPage() {
       ) : isError ? (
         <p className="px-8 py-16 text-center text-sm text-red-300">{(error as Error)?.message || "Couldn’t load channels."}</p>
       ) : filtered.length === 0 ? (
-        <p className="px-8 py-24 text-center text-sm text-fog-500">No channels here.</p>
+        <p className="px-8 py-24 text-center text-sm text-fog-500">Burada kanal yok.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 px-5 py-5 sm:grid-cols-3 sm:px-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
@@ -155,7 +155,7 @@ function FreeChannelTile({ channel }: { channel: FreeChannel }) {
       {channel.group && <p className="text-[11px] text-fog-500">{channel.group}</p>}
       <span className="absolute inset-0 grid place-items-center rounded-2xl bg-ink-950/40 opacity-0 transition-opacity group-hover:opacity-100">
         <span className="grid h-11 w-11 place-items-center rounded-full bg-iris-400 text-ink-950">
-          <Play className="h-5 w-5 translate-x-0.5 fill-ink-950" />
+          <Oynat className="h-5 w-5 translate-x-0.5 fill-ink-950" />
         </span>
       </span>
     </Link>

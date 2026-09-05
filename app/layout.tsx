@@ -8,8 +8,8 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lumen — IPTV",
-  description: "Cinematic Xtream / IPTV web player.",
+  title: "IPTV",
+  description: "Xtream / IPTV web oynatıcı.",
 };
 
 export const viewport: Viewport = {

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLibrary } from "@/store/library";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const loadLibrary = useLibrary((s) => s.load);
+  useEffect(() => { void loadLibrary(); }, [loadLibrary]);
   const [client] = useState(
     () =>
       new QueryClient({

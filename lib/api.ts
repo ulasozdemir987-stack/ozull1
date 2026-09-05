@@ -2,11 +2,11 @@
 import type {
   AuthResponse,
   Category,
-  LiveStream,
+  CanlıStream,
   VodStream,
   VodInfo,
-  Series,
-  SeriesInfo,
+  Diziler,
+  DizilerInfo,
   EpgListing,
   StreamKind,
 } from "./xtream/types";
@@ -53,30 +53,30 @@ export const api = {
       credentials: "same-origin",
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Login failed");
+    if (!res.ok) throw new Error(data?.error || "Giriş başarısız");
     return data as { ok: true; user_info: AuthResponse["user_info"]; server_info: AuthResponse["server_info"] };
   },
 
   logout: () => fetch("/api/auth", { method: "DELETE", credentials: "same-origin" }),
 
   // catalog
-  liveCategories: () => getJson<Category[]>(x("get_live_categories")),
-  liveStreams: (categoryId?: string) => getJson<LiveStream[]>(x("get_live_streams", { category_id: categoryId })),
-  vodCategories: () => getJson<Category[]>(x("get_vod_categories")),
+  liveKategoriler: () => getJson<Category[]>(x("get_live_categories")),
+  liveStreams: (categoryId?: string) => getJson<CanlıStream[]>(x("get_live_streams", { category_id: categoryId })),
+  vodKategoriler: () => getJson<Category[]>(x("get_vod_categories")),
   vodStreams: (categoryId?: string) => getJson<VodStream[]>(x("get_vod_streams", { category_id: categoryId })),
   vodInfo: (id: string | number) => getJson<VodInfo>(x("get_vod_info", { vod_id: id })),
-  seriesCategories: () => getJson<Category[]>(x("get_series_categories")),
-  series: (categoryId?: string) => getJson<Series[]>(x("get_series", { category_id: categoryId })),
-  seriesInfo: (id: string | number) => getJson<SeriesInfo>(x("get_series_info", { series_id: id })),
+  seriesKategoriler: () => getJson<Category[]>(x("get_series_categories")),
+  series: (categoryId?: string) => getJson<Diziler[]>(x("get_series", { category_id: categoryId })),
+  seriesInfo: (id: string | number) => getJson<DizilerInfo>(x("get_series_info", { series_id: id })),
 
   // epg (decoded)
   epg: (streamId: string | number, limit = 8) =>
     getJson<{ epg_listings: EpgListing[] }>(`/api/epg?stream_id=${streamId}&limit=${limit}`),
 
   // free TV (public iptv-org lists)
-  freeTvCategories: () =>
+  freeTvKategoriler: () =>
     getJson<{ categories: Array<{ id: string; name: string }> }>("/api/freetv?list=categories"),
-  freeTvCountries: () =>
+  freeTvÜlkeler: () =>
     getJson<{ countries: Array<{ id: string; name: string }> }>("/api/freetv?list=countries"),
   freeTvChannels: (mode: "cat" | "country", value: string) =>
     getJson<{ channels: FreeChannel[] }>(
@@ -105,12 +105,6 @@ export function streamSrc(kind: StreamKind, id: string | number, ext = "ts"): st
 /** ffmpeg remux URL — fallback for browser-unplayable containers (mkv/avi/…). */
 export function transcodeSrc(kind: StreamKind, id: string | number, ext: string): string {
   return `/api/transcode?type=${kind}&id=${id}&ext=${encodeURIComponent(ext)}`;
-}
-
-/** FFmpeg-backed HLS transcode/remux. Used for MPEG-TS VOD/series so browsers
- * can switch between provider-supplied audio and subtitle renditions. */
-export function transcodeHlsSrc(kind: StreamKind, id: string | number, ext: string): string {
-  return `/api/transcode-hls?type=${kind}&id=${id}&ext=${encodeURIComponent(ext)}`;
 }
 
 /** Resolve the direct provider URL + whether direct browser playback is viable. */

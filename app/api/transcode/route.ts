@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { Readable } from "node:stream";
 import { requireSession } from "@/lib/session";
-import { locatePlayable } from "@/lib/xtream/locate";
+import { locateOynatable } from "@/lib/xtream/locate";
 import type { StreamKind } from "@/lib/xtream/types";
 
 export const runtime = "nodejs";
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   try {
     creds = await requireSession();
   } catch {
-    return new Response("Not authenticated", { status: 401 });
+    return new Response("Kimlik doğrulaması yapılmadı", { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -30,9 +30,9 @@ export async function GET(req: Request) {
   const id = searchParams.get("id");
   const ext = searchParams.get("ext") || "mkv";
   const start = Math.max(0, Math.floor(Number(searchParams.get("t") || 0)));
-  if (!type || !id) return new Response("Bad request", { status: 400 });
+  if (!type || !id) return new Response("Geçersiz istek", { status: 400 });
 
-  const located = await locatePlayable(creds, type, id, ext);
+  const located = await locateOynatable(creds, type, id, ext);
   if (!located) {
     console.log(`[TRANSCODE] ${type}/${id} UNAVAILABLE (no playable container)`);
     return new Response("Title unavailable from provider", { status: 404 });

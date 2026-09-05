@@ -2,16 +2,16 @@
 
 import { TopBar } from "@/components/layout/TopBar";
 import { CatalogBrowser } from "@/components/catalog/CatalogBrowser";
-import { useVodCategories, useVodStreams } from "@/lib/hooks";
+import { useVodKategoriler, useVodStreams } from "@/lib/hooks";
 import type { VodStream } from "@/lib/xtream/types";
 import { yearFrom } from "@/lib/utils";
 
-export default function MoviesPage() {
-  const { data: cats = [] } = useVodCategories();
+export default function FilmlerPage() {
+  const { data: cats = [] } = useVodKategoriler();
 
   return (
     <>
-      <TopBar title="Movies" />
+      <TopBar title="Filmler" />
       <CatalogBrowser<VodStream>
         sectionKey="movies"
         categories={cats}
@@ -24,7 +24,7 @@ export default function MoviesPage() {
           year: yearFrom(m.name),
         })}
         hrefFor={(m) => `/movies/${m.stream_id}`}
-        emptyLabel="No movies in this category."
+        emptyLabel="Bu kategoride film yok."
       />
     </>
   );

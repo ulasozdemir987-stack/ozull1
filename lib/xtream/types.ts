@@ -44,7 +44,7 @@ export interface Category {
   parent_id: number;
 }
 
-export interface LiveStream {
+export interface CanlıStream {
   num: number;
   name: string;
   stream_type: string;
@@ -99,7 +99,7 @@ export interface VodInfo {
   };
 }
 
-export interface Series {
+export interface Diziler {
   num: number;
   name: string;
   series_id: number;
@@ -137,7 +137,7 @@ export interface Episode {
   };
 }
 
-export interface SeriesInfo {
+export interface DizilerInfo {
   seasons: Array<{
     id?: number;
     name?: string;

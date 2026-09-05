@@ -1,48 +1,40 @@
-// Playback engine selection and track control for native, HLS and MPEG-TS.
-export type EngineKind = "mpegts" | "hls" | "native" | "unsupported";
+// Picks the right playback strategy for a stream and wires it to a <video>.
+// Canlı/TS → mpegts.js · HLS (.m3u8) → hls.js · mp4 → native · mkv/other → native (may fail).
 
-export type PlayerTrack = { index: number; label: string; lang?: string };
+export type EngineKind = "mpegts" | "hls" | "native" | "unsupported";
 
 export interface EngineHandle {
   kind: EngineKind;
   destroy: () => void;
-  getAudioTracks?: () => PlayerTrack[];
-  setAudioTrack?: (index: number) => void;
-  getSubtitleTracks?: () => PlayerTrack[];
-  setSubtitleTrack?: (index: number) => void;
 }
 
 const NATIVE_OK = ["mp4", "m4v", "mov", "webm", "ogg"];
-const RISKY = ["mkv", "avi", "wmv", "flv", "ts"];
+const RISKY = ["mkv", "avi", "wmv", "flv", "ts"]; // browser-native support is unreliable
 
-export function pickEngine(url: string, ext: string, isLive: boolean): EngineKind {
+export function pickEngine(url: string, ext: string, isCanlı: boolean): EngineKind {
   const u = url.toLowerCase();
-  if (u.includes("/api/hls") || u.includes("/api/transcode-hls") || /\.m3u8(\?|$)/.test(u)) return "hls";
+  if (u.includes("/api/hls") || /\.m3u8(\?|$)/.test(u)) return "hls";
   const e = ext.toLowerCase().replace(/^\./, "");
   if (e === "m3u8") return "hls";
-  if (isLive || e === "ts") return "mpegts";
+  if (isCanlı || e === "ts") return "mpegts";
   if (NATIVE_OK.includes(e)) return "native";
-  if (RISKY.includes(e)) return "native";
+  if (RISKY.includes(e)) return "native"; // attempt; onError surfaces a fallback
   return "native";
 }
 
 export async function attach(
   video: HTMLVideoElement,
-  opts: {
-    url: string;
-    ext: string;
-    isLive: boolean;
-    onTracks?: (tracks: { audio: PlayerTrack[]; subtitles: PlayerTrack[] }) => void;
-  },
+  opts: { url: string; ext: string; isCanlı: boolean },
 ): Promise<EngineHandle> {
-  const kind = pickEngine(opts.url, opts.ext, opts.isLive);
+  const kind = pickEngine(opts.url, opts.ext, opts.isCanlı);
 
   if (kind === "hls") {
     const Hls = (await import("hls.js")).default;
     if (Hls.isSupported()) {
+      // Buffer + retry tuning for smooth, self-healing live playback.
       const hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: false,
+        lowLatencyMode: false, // favour stability over latency for IPTV
         backBufferLength: 30,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
@@ -50,27 +42,10 @@ export async function attach(
         levelLoadingMaxRetry: 6,
         fragLoadingMaxRetry: 8,
         fragLoadingRetryDelay: 500,
-        ...(opts.isLive ? { liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 10 } : {}),
+        ...(opts.isCanlı ? { liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 10 } : {}),
       });
 
-      const emitTracks = () => {
-        const audio = (hls.audioTracks || []).map((t: any, index: number) => ({
-          index,
-          label: t.name || t.lang || `Audio ${index + 1}`,
-          lang: t.lang || undefined,
-        }));
-        const subtitles = (hls.subtitleTracks || []).map((t: any, index: number) => ({
-          index,
-          label: t.name || t.lang || `Subtitle ${index + 1}`,
-          lang: t.lang || undefined,
-        }));
-        opts.onTracks?.({ audio, subtitles });
-      };
-
-      hls.on(Hls.Events.MANIFEST_PARSED, emitTracks);
-      hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, emitTracks);
-      hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, emitTracks);
-
+      // auto-recover instead of stalling on transient network/media errors
       hls.on(Hls.Events.ERROR, (_e, data) => {
         if (!data.fatal) return;
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
@@ -80,17 +55,10 @@ export async function attach(
 
       hls.loadSource(opts.url);
       hls.attachMedia(video);
-      return {
-        kind: "hls",
-        getAudioTracks: () => (hls.audioTracks || []).map((t: any, index: number) => ({ index, label: t.name || t.lang || `Audio ${index + 1}`, lang: t.lang || undefined })),
-        setAudioTrack: (index: number) => { hls.audioTrack = index; },
-        getSubtitleTracks: () => (hls.subtitleTracks || []).map((t: any, index: number) => ({ index, label: t.name || t.lang || `Subtitle ${index + 1}`, lang: t.lang || undefined })),
-        setSubtitleTrack: (index: number) => { hls.subtitleTrack = index; },
-        destroy: () => hls.destroy(),
-      };
+      return { kind: "hls", destroy: () => hls.destroy() };
     }
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = opts.url;
+    if (video.canOynatType("application/vnd.apple.mpegurl")) {
+      video.src = opts.url; // Safari native HLS
       return { kind: "native", destroy: () => void (video.src = "") };
     }
     video.src = opts.url;
@@ -99,14 +67,14 @@ export async function attach(
 
   if (kind === "mpegts") {
     const mpegts = (await import("mpegts.js")).default;
-    if (mpegts.getFeatureList().mseLivePlayback || mpegts.isSupported()) {
-      const player = mpegts.createPlayer(
-        { type: "mpegts", isLive: opts.isLive, url: opts.url },
+    if (mpegts.getFeatureList().mseCanlıOynatback || mpegts.isSupported()) {
+      const player = mpegts.createOynater(
+        { type: "mpegts", isCanlı: opts.isCanlı, url: opts.url },
         {
-          enableStashBuffer: false,
+          enableStashBuffer: false, // start playing ASAP, don't pre-buffer
           stashInitialSize: 128,
           lazyLoad: false,
-          liveBufferLatencyChasing: opts.isLive,
+          liveBufferLatencyChasing: opts.isCanlı,
           liveBufferLatencyChasingOnPaused: false,
           liveBufferLatencyMaxLatency: 3.0,
           liveBufferLatencyMinRemain: 0.5,
@@ -115,12 +83,21 @@ export async function attach(
       );
       player.attachMediaElement(video);
       player.load();
-      return { kind: "mpegts", destroy: () => { try { player.destroy(); } catch {} } };
+      return {
+        kind: "mpegts",
+        destroy: () => {
+          try {
+            player.destroy();
+          } catch {}
+        },
+      };
     }
+    // fall through to native if MSE unavailable
     video.src = opts.url;
     return { kind: "native", destroy: () => void (video.src = "") };
   }
 
+  // native
   video.src = opts.url;
   return { kind: "native", destroy: () => void (video.src = "") };
 }

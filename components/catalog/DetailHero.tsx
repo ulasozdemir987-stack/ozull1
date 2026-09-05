@@ -44,7 +44,7 @@ export function DetailHero({
               "grid h-10 w-10 place-items-center rounded-full glass transition-colors",
               fav ? "text-iris-400" : "text-fog-300 hover:text-foreground",
             )}
-            aria-label="Toggle favourite"
+            aria-label="Favorilere ekle/çıkar"
           >
             <Heart className={cn("h-5 w-5", fav && "fill-iris-400")} />
           </button>

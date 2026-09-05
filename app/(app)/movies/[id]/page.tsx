@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Play, Star, Clock, Calendar } from "lucide-react";
+import { Oynat, Star, Clock, Calendar } from "lucide-react";
 import { DetailHero } from "@/components/catalog/DetailHero";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useVodInfo } from "@/lib/hooks";
@@ -15,7 +15,7 @@ export default function MovieDetailPage() {
   const { isFav, toggleFav, progress } = useLibrary();
 
   if (isLoading) return <DetailSkeleton />;
-  if (isError || !data) return <p className="px-8 py-24 text-center text-red-300">Couldn’t load this title.</p>;
+  if (isError || !data) return <p className="px-8 py-24 text-center text-red-300">Bu içerik yüklenemedi.</p>;
 
   const info = data.info;
   const md = data.movie_data;
@@ -66,7 +66,7 @@ export default function MovieDetailPage() {
           href={playHref}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-iris-300 to-iris-500 px-7 py-3 font-semibold text-ink-950 transition-transform hover:scale-[1.03]"
         >
-          <Play className="h-5 w-5 fill-ink-950" /> {resume > 15 ? "Resume" : "Play"}
+          <Oynat className="h-5 w-5 fill-ink-950" /> {resume > 15 ? "Kaldığın yerden devam et" : "Oynat"}
         </Link>
       </div>
 

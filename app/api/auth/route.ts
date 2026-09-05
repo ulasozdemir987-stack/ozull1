@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json({ error: "Geçersiz istek gövdesi" }, { status: 400 });
   }
 
   const baseUrl = normalizeBaseUrl(body.baseUrl ?? "");
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
   if (!baseUrl || !username || !password) {
     return NextResponse.json(
-      { error: "Server URL, username and password are all required." },
+      { error: "Sunucu URL'si, username and password are all required." },
       { status: 400 },
     );
   }
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   } catch (err) {
     const status = err instanceof XtreamError && err.status ? err.status : 401;
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Authentication failed" },
+      { error: err instanceof Error ? err.message : "Kimlik doğrulama başarısız" },
       { status },
     );
   }

@@ -2,16 +2,16 @@ import { playerApiUrl } from "./urls";
 import type {
   AuthResponse,
   Category,
-  LiveStream,
+  CanlıStream,
   VodStream,
   VodInfo,
-  Series,
-  SeriesInfo,
+  Diziler,
+  DizilerInfo,
   ShortEpgResponse,
   XtreamCredentials,
 } from "./types";
 
-const UA = "Lumen/1.0 (Xtream Web Player)";
+const UA = "Lumen/1.0 (Xtream Web Oynater)";
 const TIMEOUT_MS = 25_000;
 
 async function call<T>(
@@ -63,13 +63,13 @@ export async function authenticate(creds: XtreamCredentials): Promise<AuthRespon
   return data;
 }
 
-export const getLiveCategories = (c: XtreamCredentials) =>
+export const getCanlıKategoriler = (c: XtreamCredentials) =>
   call<Category[]>(c, { action: "get_live_categories" });
 
-export const getLiveStreams = (c: XtreamCredentials, categoryId?: string) =>
-  call<LiveStream[]>(c, { action: "get_live_streams", category_id: categoryId });
+export const getCanlıStreams = (c: XtreamCredentials, categoryId?: string) =>
+  call<CanlıStream[]>(c, { action: "get_live_streams", category_id: categoryId });
 
-export const getVodCategories = (c: XtreamCredentials) =>
+export const getVodKategoriler = (c: XtreamCredentials) =>
   call<Category[]>(c, { action: "get_vod_categories" });
 
 export const getVodStreams = (c: XtreamCredentials, categoryId?: string) =>
@@ -78,14 +78,14 @@ export const getVodStreams = (c: XtreamCredentials, categoryId?: string) =>
 export const getVodInfo = (c: XtreamCredentials, vodId: string | number) =>
   call<VodInfo>(c, { action: "get_vod_info", vod_id: vodId });
 
-export const getSeriesCategories = (c: XtreamCredentials) =>
+export const getDizilerKategoriler = (c: XtreamCredentials) =>
   call<Category[]>(c, { action: "get_series_categories" });
 
-export const getSeries = (c: XtreamCredentials, categoryId?: string) =>
-  call<Series[]>(c, { action: "get_series", category_id: categoryId });
+export const getDiziler = (c: XtreamCredentials, categoryId?: string) =>
+  call<Diziler[]>(c, { action: "get_series", category_id: categoryId });
 
-export const getSeriesInfo = (c: XtreamCredentials, seriesId: string | number) =>
-  call<SeriesInfo>(c, { action: "get_series_info", series_id: seriesId });
+export const getDizilerInfo = (c: XtreamCredentials, seriesId: string | number) =>
+  call<DizilerInfo>(c, { action: "get_series_info", series_id: seriesId });
 
 export const getShortEpg = (c: XtreamCredentials, streamId: string | number, limit = 8) =>
   call<ShortEpgResponse>(c, { action: "get_short_epg", stream_id: streamId, limit });
@@ -100,21 +100,21 @@ export async function dispatch(
     case "authenticate":
       return authenticate(creds);
     case "get_live_categories":
-      return getLiveCategories(creds);
+      return getCanlıKategoriler(creds);
     case "get_live_streams":
-      return getLiveStreams(creds, params.category_id);
+      return getCanlıStreams(creds, params.category_id);
     case "get_vod_categories":
-      return getVodCategories(creds);
+      return getVodKategoriler(creds);
     case "get_vod_streams":
       return getVodStreams(creds, params.category_id);
     case "get_vod_info":
       return getVodInfo(creds, params.vod_id!);
     case "get_series_categories":
-      return getSeriesCategories(creds);
+      return getDizilerKategoriler(creds);
     case "get_series":
-      return getSeries(creds, params.category_id);
+      return getDiziler(creds, params.category_id);
     case "get_series_info":
-      return getSeriesInfo(creds, params.series_id!);
+      return getDizilerInfo(creds, params.series_id!);
     case "get_short_epg":
       return getShortEpg(creds, params.stream_id!, params.limit ? Number(params.limit) : 8);
     default:

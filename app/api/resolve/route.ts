@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   try {
     creds = await requireSession();
   } catch {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ error: "Kimlik doğrulaması yapılmadı" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   const ext = searchParams.get("ext") || "mp4";
 
   if (!type || !id || !["live", "movie", "series"].includes(type)) {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
   }
 
   const url = buildStreamUrl(creds, type, id, ext);

@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Tv, Film, MonitorPlay, Search, Heart, Radio } from "lucide-react";
+import { Ana sayfa, Tv, Film, MonitorOynat, Ara, Heart, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "Home", icon: Home, exact: true },
-  { href: "/live", label: "Live TV", icon: Tv },
-  { href: "/freetv", label: "Free TV", icon: Radio },
-  { href: "/movies", label: "Movies", icon: Film },
-  { href: "/series", label: "Series", icon: MonitorPlay },
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/favourites", label: "My List", icon: Heart },
+  { href: "/", label: "Ana sayfa", icon: Ana sayfa, exact: true },
+  { href: "/live", label: "Canlı TV", icon: Tv },
+  { href: "/freetv", label: "Ücretsiz TV", icon: Radio },
+  { href: "/movies", label: "Filmler", icon: Film },
+  { href: "/series", label: "Diziler", icon: MonitorOynat },
+  { href: "/search", label: "Ara", icon: Ara },
+  { href: "/favourites", label: "Listem", icon: Heart },
 ];
 
 export function Sidebar() {

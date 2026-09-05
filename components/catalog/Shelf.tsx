@@ -34,7 +34,7 @@ export function Shelf({
       <div className="relative">
         <button
           onClick={() => scroll(-1)}
-          aria-label="Scroll left"
+          aria-label="Sola kaydır"
           className="absolute left-0 top-0 z-10 hidden h-full w-12 items-center justify-center bg-gradient-to-r from-ink-950 to-transparent text-foreground opacity-0 transition-opacity group-hover/shelf:opacity-100 lg:flex"
         >
           <ChevronLeft className="h-7 w-7" />
@@ -47,7 +47,7 @@ export function Shelf({
         </div>
         <button
           onClick={() => scroll(1)}
-          aria-label="Scroll right"
+          aria-label="Sağa kaydır"
           className="absolute right-0 top-0 z-10 hidden h-full w-12 items-center justify-center bg-gradient-to-l from-ink-950 to-transparent text-foreground opacity-0 transition-opacity group-hover/shelf:opacity-100 lg:flex"
         >
           <ChevronRight className="h-7 w-7" />

@@ -15,14 +15,14 @@ export async function GET(req: Request) {
   try {
     await requireSession();
   } catch {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ error: "Kimlik doğrulaması yapılmadı" }, { status: 401 });
   }
 
   if (!tmdbEnabled()) return NextResponse.json({ _disabled: true });
 
   const { searchParams } = new URL(req.url);
   const path = searchParams.get("path") || "";
-  if (!isAllowedPath(path)) return NextResponse.json({ error: "Path not allowed" }, { status: 400 });
+  if (!isAllowedPath(path)) return NextResponse.json({ error: "İzin verilmeyen yol" }, { status: 400 });
 
   const params: Record<string, string> = {};
   for (const [k, v] of searchParams.entries()) if (k !== "path") params[k] = v;
