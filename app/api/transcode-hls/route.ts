@@ -12,6 +12,35 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const UA = "VLC/3.0.20 LibVLC/3.0.20";
+
+function inputHeaders(input: string) {
+  const u = new URL(input);
+  const origin = `${u.protocol}//${u.host}/`;
+  return `User-Agent: ${UA}\r\nAccept: video/x-matroska,video/*,*/*;q=0.8\r\nReferer: ${origin}\r\nConnection: keep-alive\r\n`;
+}
+
+async function diagnoseInput(input: string) {
+  try {
+    const u = new URL(input);
+    const res = await fetch(u, {
+      headers: {
+        "User-Agent": UA,
+        Accept: "video/x-matroska,video/*,*/*;q=0.8",
+        Referer: `${u.protocol}//${u.host}/`,
+        Range: "bytes=0-31",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000),
+    });
+    const buf = Buffer.from(await res.arrayBuffer());
+    const head = buf.subarray(0, 32).toString("hex");
+    console.log(`[TRANSCODE-HLS] provider probe status=${res.status} ct=${res.headers.get("content-type") || ""} len=${res.headers.get("content-length") || ""} final=${res.url} head=${head}`);
+    return res.status >= 200 && res.status < 300 && !/text\/html|application\/json/i.test(res.headers.get("content-type") || "");
+  } catch (e) {
+    console.log(`[TRANSCODE-HLS] provider probe error: ${(e as Error).message}`);
+    return false;
+  }
+}
 const FFMPEG = process.env.FFMPEG_PATH || "ffmpeg";
 const FFPROBE = process.env.FFPROBE_PATH || "ffprobe";
 const ROOT = path.join(os.tmpdir(), "lumen-hls");
@@ -51,7 +80,7 @@ function run(cmd: string, args: string[], timeout = 30000) {
 
 async function probe(input: string): Promise<ProbeStream[]> {
   const r = await new Promise<{ code: number; stdout: string; stderr: string }>((resolve, reject) => {
-    const p = spawn(FFPROBE, ["-v", "error", "-user_agent", UA, "-show_entries", "stream=index,codec_type,codec_name,duration:stream_tags=language,title", "-of", "json", input], { stdio: ["ignore", "pipe", "pipe"] });
+    const p = spawn(FFPROBE, ["-v", "error", "-headers", inputHeaders(input), "-show_entries", "stream=index,codec_type,codec_name,duration:stream_tags=language,title", "-of", "json", input], { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "", stderr = "";
     p.stdout.on("data", d => { stdout += String(d); });
     p.stderr.on("data", d => { stderr += String(d); });
@@ -83,7 +112,7 @@ async function waitForFile(file: string, timeoutMs = 15000) {
 }
 
 async function extractSubtitle(input: string, stream: ProbeStream, out: string) {
-  const r = await run(FFMPEG, ["-hide_banner", "-loglevel", "error", "-user_agent", UA, "-i", input, "-map", `0:${stream.index}`, "-c:s", "webvtt", "-f", "webvtt", out], 120000);
+  const r = await run(FFMPEG, ["-hide_banner", "-loglevel", "error", "-headers", inputHeaders(input), "-i", input, "-map", `0:${stream.index}`, "-c:s", "webvtt", "-f", "webvtt", out], 120000);
   if (r.code !== 0) throw new Error(`Subtitle extraction failed: ${r.stderr}`);
 }
 
@@ -142,7 +171,7 @@ async function startSession(input: string, streams: ProbeStream[]) {
   const videoCodec = (video.codec_name || "").toLowerCase();
   const copyVideo = videoCodec === "h264" || videoCodec === "avc";
 
-  const args: string[] = ["-hide_banner", "-loglevel", "warning", "-user_agent", UA, "-i", input];
+  const args: string[] = ["-hide_banner", "-loglevel", "warning", "-headers", inputHeaders(input), "-i", input];
   audios.forEach((_a, i) => args.push("-map", `0:a:${i}`));
   args.push("-map", "0:v:0");
   if (copyVideo) args.push("-c:v", "copy");
@@ -246,7 +275,10 @@ export async function GET(req: Request) {
     const creds = await requireSession();
     const located = await locatePlayable(creds, type, id, ext);
     if (!located) return new Response("Title unavailable from provider", { status: 404 });
+    console.log(`[TRANSCODE-HLS] input ${located.url}`);
+    await diagnoseInput(located.url);
     const streams = await probe(located.url);
+    console.log(`[TRANSCODE-HLS] streams video=${streams.filter(s => s.codec_type === "video").length} audio=${streams.filter(s => s.codec_type === "audio").length} subtitle=${streams.filter(s => s.codec_type === "subtitle").length}`);
     const sid = await startSession(located.url, streams);
     return new Response(null, { status: 302, headers: { location: `/api/transcode-hls?s=${encodeURIComponent(sid)}&file=master.m3u8`, "cache-control": "no-store" } });
   } catch (e) {
